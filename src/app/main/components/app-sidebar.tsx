@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { setThemeColor } from "@/app/dashboard/components/Meetingype"
+import { setThemeColor } from "@/app/main/(dashboard)/components/Meetingype"
 
 // This is sample data.
 const data = {
@@ -25,16 +25,12 @@ const data = {
       url: "#",
       items: [
         {
-          title: "Reunião do meio de semana",
-          url: "#",
+          title: "Visão Geral",
+          url: "/main",
         },
         {
-          title: "Reunião do fim de semana",
-          url: "#",
-        },
-        {
-          title: "Visão geral da reunião da semana",
-          url: "#",
+          title: "Atribuição de designação",
+          url: "/main/atribuir",
         }
       ],
     },
@@ -43,43 +39,29 @@ const data = {
       url: "#",
       items: [
         {
-          title: "Publicadores",
-          url: "#",
+          title: "Registar membros",
+          url: "/main/registar",
         },
         {
           title: "Assistência",
-          url: "#",
+          url: "/main/assistencia",
           isActive: true,
         },
         {
-          title: "Grupo",
-          url: "#",
+          title: "Membros",
+          url: "/main/membros",
         },
         {
-          title: "Remoção",
-          url: "#",
+          title: "Grupos",
+          url: "/main/grupos",
         },
         {
-          title: "Departamento",
-          url: "#",
-        }
-      ],
-    },
-    {
-      title: "Relatório",
-      url: "#",
-      items: [
-        {
-          title: "Pioneiro regular",
-          url: "#",
+          title: "Departamentos",
+          url: "/main/departamento",
         },
         {
-          title: "Pioneiro Auxiliar",
-          url: "#",
-        },
-        {
-          title: "Publicador",
-          url: "#",
+          title: "Relatórios",
+          url: "/main/relatorio",
         }
       ],
     },
@@ -114,7 +96,7 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar {...props}>
+    <Sidebar {...props} >
       <SidebarHeader>
         <VersionSwitcher
           versions={data.versions}

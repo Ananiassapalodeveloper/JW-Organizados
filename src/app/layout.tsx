@@ -5,6 +5,8 @@ import { Inter } from "next/font/google"
 import type React from "react" // Import React
 import AppWrapper from "@/components/AppWrapper"
 
+
+
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
@@ -25,6 +27,7 @@ export default function RootLayout({
     <html lang="pt">
       <body className={inter.className}>
         <Providers>
+          
           <AppWrapper>{children}</AppWrapper>
         </Providers>
       </body>

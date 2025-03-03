@@ -67,7 +67,7 @@ export function Diferences() {
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger
                 className="w-[160px] rounded-lg sm:ml-auto"
-                aria-label="Select a value"
+                aria-label="Selecione"
               >
                 <SelectValue placeholder="Last 3 months" />
               </SelectTrigger>
@@ -87,8 +87,10 @@ export function Diferences() {
         </CardDescription>
 
       </CardHeader>
-      <CardContent className="pl-2">
-        <ChartContainer config={chartConfig}>
+      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+        <ChartContainer config={chartConfig}
+        className="aspect-auto h-[250px] w-full"
+        >
           <AreaChart
             accessibilityLayer
             data={data}
@@ -106,7 +108,6 @@ export function Diferences() {
               tickFormatter={(value) => value.slice(0, 3)}
             />
             <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
-
             <defs>
             <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
               <stop

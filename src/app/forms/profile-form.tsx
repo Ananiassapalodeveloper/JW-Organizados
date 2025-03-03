@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { X } from "lucide-react"
 
 const profileFormSchema = z.object({
   username: z
@@ -69,7 +70,7 @@ export function ProfileForm() {
     mode: "onChange",
   })
 
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     name: "urls",
     control: form.control,
   })
@@ -159,18 +160,34 @@ export function ProfileForm() {
               key={field.id}
               name={`urls.${index}.value`}
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={cn(index !== 0 && "sr-only")}>
-                    URLs
-                  </FormLabel>
-                  <FormDescription className={cn(index !== 0 && "sr-only")}>
-                    Add links to your website, blog, or social media profiles.
-                  </FormDescription>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <div className="flex items-center gap-2">
+                  <FormItem >
+                    <FormLabel className={cn(index !== 0 && "sr-only")}>
+                      URLs
+                    </FormLabel>
+                    <FormDescription className={cn(index !== 0 && "sr-only")}>
+                      Add links to your website, blog, or social media profiles.
+                    </FormDescription>
+                    <div className="flex items-center gap-2">
+                      <FormControl className="bg-green-500 w-full">
+                        <Input {...field} />
+
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={""}
+                        onClick={() => remove(index)}
+                      >
+                        <X className="stroke-red-500" />
+                      </Button>
+                    </div>
+
+                    <FormMessage />
+                  </FormItem>
+
+                </div>
               )}
             />
           ))}

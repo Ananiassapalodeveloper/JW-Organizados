@@ -13,7 +13,7 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data } = await api.post('/api/auth/login', { email, password });
+      const { data } = await api.post('/auth/login', { email, password });
       
       // Supondo que a resposta contenha "user" e "token":
       login(data.user, data.token);

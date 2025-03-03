@@ -1,4 +1,4 @@
-import ImageMusica from "./../../../../public/avatars/03.png"
+import ImageMusica from "@public/avatars/03.png"
 export interface Album {
   name: string
   artist: string
