@@ -104,7 +104,7 @@ export default function DashboardPage({
     );
 }
 
-export function Data({ data }: { data: { data: string } }) {
+ function Data({ data }: { data: { data: string } }) {
     return (
 
         <Tabs
