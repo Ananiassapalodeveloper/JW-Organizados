@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 // Buscar estados por ID
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const { id } = params;
-  const estados = await prisma.estado.findUnique({
+  const estados = await prisma.arrumacao.findUnique({
     where: { id }
     // include: { estado: true, carreira: true, servicos: { include: { servico: true, posicao: true } } }
   });
@@ -21,7 +21,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const { id } = params;
     const body = await req.json();
 
-    const estados = await prisma.estado.update({ where: { id }, data: body });
+    const estados = await prisma.arrumacao.update({ where: { id }, data: body });
 
     return NextResponse.json({ message: "estados atualizado com sucesso!", estados });
   } catch (error) {
@@ -36,7 +36,7 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     
 
     // Exclui o estados
-    await prisma.estado.delete({ where: { id } });
+    await prisma.arrumacao.delete({ where: { id } });
 
     return NextResponse.json({ message: "estados excluído com sucesso!" });
   } catch (error) {
