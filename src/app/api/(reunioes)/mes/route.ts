@@ -6,7 +6,7 @@ import { z } from "zod";
 const mesSchema = z.object({
   descricao: z.string().optional(),
   mes: z.number({ required_error: "O mes é obrigatório" }),
-  AnosId: z.string().optional(),
+  anosId: z.string().optional()
 });
 
 export async function POST(request: Request) {
@@ -28,7 +28,7 @@ export async function GET() {
   const mes = await prisma.meses.findMany({
     select: {
       ano: true,
-      AnosId: true,
+      anoId:true,
       descricao: true,
       ReunioesDates: true,
       mes: true,

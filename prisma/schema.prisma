@@ -272,7 +272,7 @@ model Meses {
   mes       Int
   descricao String?
   anoId     String // Agora obrigatório
-  ano       Ano     @relation(fields: [anoId], references: [id], onDelete: Cascade)
+  ano       Ano?     @relation(fields: [anoId], references: [id], onDelete: Cascade)
 
   ReunioesDates ReunioesDates[]
 }
@@ -282,7 +282,7 @@ model ReunioesDates {
   from  DateTime @default(now())
   to    DateTime @default(now())
   mesId String
-  mes   Meses    @relation(fields: [mesId], references: [id], onDelete: Cascade)
+  mes   Meses?    @relation(fields: [mesId], references: [id], onDelete: Cascade)
 
   PartesInicias PartesInicias[]
   Tesouros      Tesouros[]
@@ -457,4 +457,5 @@ model HourLog {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 
