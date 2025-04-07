@@ -29,17 +29,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { changeColorStatus } from "@/lib/color";
 
 export const metadata: Metadata = {
   title: "Assistência Visão geral",
   description: "Visão geral da congregação praça Nova 3",
 };
 
-export function changeColorStatus(status: string): string {
-  if (status === "não inicializado") return "stroke-red-500";
-  else if (status === "feito") return "stroke-green-500";
-  else return "stroke-yellow-500";
-}
+
 
 const registes = [
   {
