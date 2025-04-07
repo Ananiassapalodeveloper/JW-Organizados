@@ -19,10 +19,13 @@ import { Button } from "@/components/ui/button";
 //   description: "Visão geral da congregação praça Nova 3",
 // };
 
-export function changeColorStatus(status: string): string {
-  if (status === "não inicializado") return "stroke-red-500";
-  else if (status === "entregue") return "stroke-green-500";
-  else return "stroke-yellow-500";
+function changeColorStatus(status: string): string {
+  const colors: Record<string, string> = {
+    "não inicializado": "stroke-red-500",
+    entregue: "stroke-green-500",
+  };
+
+  return colors[status] ?? "stroke-yellow-500";
 }
 
 const registes = [
@@ -167,7 +170,9 @@ export default function AssistenciaPage() {
                     />
                   </div>
                   <div className="grid gap-4">
-                    <Label htmlFor="assistence">Define o número de estudo dirigido</Label>
+                    <Label htmlFor="assistence">
+                      Define o número de estudo dirigido
+                    </Label>
                     <Input
                       type="number"
                       name=""
