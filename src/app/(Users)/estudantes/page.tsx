@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LampDeskIcon } from "lucide-react";
@@ -144,7 +145,7 @@ const students = [
   },
 ];
 
-export function changeColorservo(index: number): string {
+ function changeColorservo(index: number): string {
   const color = [
     "stroke-red-500",
     "stroke-yellow-500",
@@ -152,12 +153,8 @@ export function changeColorservo(index: number): string {
     "stroke-blue-500",
     "stroke-pink-500",
   ];
-  if (index === 0) return color[0];
-  if (index === 1) return color[1];
-  if (index === 2) return color[2];
-  if (index === 3) return color[3];
-  if (index === 4) return color[4];
-  else return color[5];
+
+  return color[color.length % index];
 }
 
 export default function DashboardPage() {
