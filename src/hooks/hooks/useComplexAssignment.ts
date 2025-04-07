@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAutoAssignment } from "./Automatic"
 
 // Exemplo de uso mais complexo com múltiplas funções
-export const useComplexAssignment = ({ members, setRoleIds, reuniaoType }) => {
+export const useComplexAssignment = ({ members, setRoleIds, reuniaoType }:{ members:any[], setRoleIds:any, reuniaoType:any }) => {
   // Função para obter a contagem de designações com base no tipo de reunião
-  const getAssignmentCount = (member) => {
+  const getAssignmentCount = (member:any) => {
     switch (reuniaoType) {
       case "ministerio":
         return member._count.MinisterioMembroDirigente
@@ -35,7 +37,7 @@ export const useComplexAssignment = ({ members, setRoleIds, reuniaoType }) => {
         // Exemplo: Verificar se o membro já foi designado recentemente para esta função
         const recentAssignments = member.recentAssignments || []
         const hasRecentAssignment = recentAssignments.some(
-          (assignment) =>
+          (assignment: { role: string; date: string | number | Date }) =>
             assignment.role === role && new Date(assignment.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         )
 
