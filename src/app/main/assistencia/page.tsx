@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {  } from "../atribuir/page";
 import { Circle, CircleCheckIcon, LampDeskIcon } from "lucide-react";
 import Link from "next/link";
+import { changeColorStatus } from "@/lib/color";
 
 
 export const metadata: Metadata = {
@@ -150,7 +151,7 @@ export default function AssistenciaPage() {
                 <CardTitle className="text-sm font-medium">
                   {data.completed}
                 </CardTitle>
-                {/* <data.icon className={changeColorStatus(data.status)} /> */}
+                <data.icon className={changeColorStatus(data.status)} />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{data.month}</div>

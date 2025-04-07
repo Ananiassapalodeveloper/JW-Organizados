@@ -13,10 +13,10 @@ import {
 import { AssistenceRegisterCard } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/AssistenceRegisterCard";
 
 import { cn } from "@/lib/utils";
-import { changeColorStatus } from "@/app/(Users)/relatorios/page"; 
 import { Accordion,AccordionContent,AccordionItem,AccordionTrigger } from "@/components/ui/accordion";
 import { AssiatenceMonths } from "@/components/charts/AssiatenceMonths";
 import {Component } from "@/components/charts/diferences2";
+import { changeColorStatus } from "@/lib/color";
 
 export const metadata: Metadata = {
     title: "Desiganações",

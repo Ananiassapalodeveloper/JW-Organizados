@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookIcon, CalculatorIcon, LampDeskIcon, MapPin, MicIcon,  Wrench } from "lucide-react";
 import Link from "next/link";
+import { changeColorservo } from "@/lib/color";
 
 export const metadata: Metadata = {
   title: "Desiganações",
@@ -41,20 +42,7 @@ const Publications = [
   }
 ];
 
-export function changeColorservo(index: number): string {
-  const color = ["stroke-red-500", "stroke-yellow-500", "stroke-green-500", "stroke-blue-500", "stroke-pink-500"];
-  if (index === 0)
-    return color[0]
-  if (index === 1)
-    return color[1]
-  if (index === 2)
-    return color[2]
-  if (index === 3)
-    return color[3]
-  if (index === 4)
-    return color[4]
-  else return color[5]
-}
+
 
 export default function DashboardPage() {
   return (

@@ -145,17 +145,7 @@ const students = [
   },
 ];
 
- function changeColorservo(index: number): string {
-  const color = [
-    "stroke-red-500",
-    "stroke-yellow-500",
-    "stroke-green-500",
-    "stroke-blue-500",
-    "stroke-pink-500",
-  ];
 
-  return color[color.length % index];
-}
 
 export default function DashboardPage() {
   return (

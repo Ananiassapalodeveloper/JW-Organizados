@@ -14,20 +14,14 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 import { Button } from "@/components/ui/button";
+import { changeColorStatus } from "@/lib/color";
 
 // export const metadata: Metadata = {
 //   title: "Assistência Visão geral",
 //   description: "Visão geral da congregação praça Nova 3",
 // };
 
-function changeColorStatus(status: string): string {
-  const colors: Record<string, string> = {
-    "não inicializado": "stroke-red-500",
-    entregue: "stroke-green-500",
-  };
 
-  return colors[status] ?? "stroke-yellow-500";
-}
 
 const registes = [
   {

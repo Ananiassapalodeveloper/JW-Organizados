@@ -19,6 +19,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { changeColorservo } from "@/lib/color";
 
 export const metadata: Metadata = {
   title: "Desiganações",
@@ -58,21 +59,7 @@ const Publications = [
   },
 ];
 
-export function changeColorservo(index: number): string {
-  const color = [
-    "stroke-red-500",
-    "stroke-yellow-500",
-    "stroke-green-500",
-    "stroke-blue-500",
-    "stroke-pink-500",
-  ];
-  if (index === 0) return color[0];
-  if (index === 1) return color[1];
-  if (index === 2) return color[2];
-  if (index === 3) return color[3];
-  if (index === 4) return color[4];
-  else return color[5];
-}
+
 
 export default function DashboardPage() {
   return (
