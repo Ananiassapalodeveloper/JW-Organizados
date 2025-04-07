@@ -17,25 +17,25 @@ import { Users } from "lucide-react";
 const components: { title: string; href: string; description: string }[] = [
   {
     title: "Teus estudantes",
-    href: "/docs/primitives/alert-dialog",
+    href: "/estudantes",
     description:
       "Vê todos os seus estudantes, em que livro estão e onde ficaram, as suas informações pessoais, necessidades e muito mais.",
   },
   {
     title: "Relatório",
-    href: "/docs/primitives/hover-card",
+    href: "/relatorios",
     description:
       "Regista as tuas actividades de campo, as tuas modalidades, o tempo dispensado e muito mais.",
   },
   {
     title: "Estudo pessoal",
-    href: "/docs/primitives/progress",
+    href: "/estudo-pessoal",
     description:
       "Regista, criando como lembrete, os assuntos para o seu estudo pessoal",
   },
   {
     title: "Pregação",
-    href: "/docs/primitives/scroll-area",
+    href: "/pregacao",
     description: "Define o seu programa de pregação.",
   }
 ];

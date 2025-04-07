@@ -13,7 +13,7 @@ import {
 import { AssistenceRegisterCard } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/AssistenceRegisterCard";
 
 import { cn } from "@/lib/utils";
-import { changeColorStatus } from "../../atribuir/page";
+import { changeColorStatus } from "@/app/(Users)/relatorios/page"; 
 import { Accordion,AccordionContent,AccordionItem,AccordionTrigger } from "@/components/ui/accordion";
 import { AssiatenceMonths } from "@/components/charts/AssiatenceMonths";
 import {Component } from "@/components/charts/diferences2";
@@ -76,14 +76,14 @@ export default function DashboardPage({
                                 key={data.value}
                                 className="gap-2 items-center"
                             >
-                                <data.icon className={cn(changeColorStatus(data.status), "size-5")} />{data.month}
+                                <data.icon className={cn(changeColorStatus(data?.status), "size-5")} />{data.month}
                             </TabsTrigger>
                         ))}
                     </TabsList>
-                    {AllDesignations.map((data) => (
+                    {AllDesignations?.map((data) => (
                         <TabsContent
-                            key={data.month}
-                            value={data.month}
+                            key={data?.month}
+                            value={data?.month}
                             className="space-y-4"
                         >
                             <Data data={{ data: data.month }} />

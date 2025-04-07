@@ -64,3 +64,1337 @@ Casa do casal Vinho
 
 Casa do casal Vinho
 9:00
+
+
+Aprendizado:
+const onSubmit: SubmitHandler<z.infer<typeof schema>> = async (values) => {
+    const isValid = await form.trigger(currentStepFields as string[], {
+      shouldFocus: true,
+    });
+    if (!isValid) return;
+
+    if (!isLastStep) return nextStep();
+
+    await saveFormValues(values);
+  };
+
+
+
+
+
+  _______________________________________________________________________________________
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+import {
+  AlertCircle,
+  Check,
+  ChevronsUpDown,
+  Clock10Icon,
+  Loader,
+  MagnetIcon,
+  PlusCircle,
+  X,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { setThemeColor } from "../../Meetingype";
+import React, { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import { useFetch } from "@/hooks/useFetch";
+import { useFieldArray, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { api } from "@/hooks/use-membro-form-data";
+import { toast } from "@/hooks/use-toast";
+import { AxiosError } from "axios";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  ministerioType,
+  type presidentType as BrothersType,
+  ministerioSchema,
+} from "@/types/reuniaoMeioSemanaDTO/type";
+import { useAutoAssignment } from "@/hooks/useAutoAssignment";
+import { PresidentEndPrayingSkeleton } from "@/components/PresidentEndPrayingSkeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RemoverDesignacaoDialog } from "@/components/RemoverEmpenhaMinisterio/removedor-designacao-dialog";
+import { Badge } from "@/components/ui/badge";
+import { MinisterioType } from "@/services/MinisterioData/data";
+import { CompletedDisignation } from "@/lib/isCompleted";
+import { bookImd, BookTH } from "@/services/Book.data";
+import { Input } from "@/components/ui/input";
+import { QTDsDesignation } from "@/components/FormsComponents/QTDsDesignation";
+
+const defaultValues: Partial<ministerioType> = {
+  name: "iniciarConversa1",
+  memberDirigenteId: "",
+  memberDirigenteSuplenteId: "",
+  memberMoradorId: "",
+  memberMoradorSuplenteId: "",
+  reunioesDatesId: "",
+  tema: "",
+  lessonPoint: "",
+  bookImd: [
+    {
+      number: "1",
+      points: [{ point: "3", subpoint: [] }],
+    },
+  ],
+};
+
+export function MinisterioPage({ params }: { params: { id: string } }) {
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isAutoAssigningDirigente, setIsAutoAssigningDirigente] =
+    useState(false);
+  const [isAutoAssigningMorador, setIsAutoAssigningMorador] = useState(false);
+
+  const {
+    data: brothers,
+    error,
+    isLoading,
+    mutate: BroMutate,
+  } = useFetch<BrothersType[]>("brothers");
+
+  const form = useForm<ministerioType>({
+    resolver: zodResolver(ministerioSchema),
+    defaultValues: {
+      ...defaultValues,
+      reunioesDatesId: params.id,
+    },
+    mode: "onChange",
+  });
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { isSubmitting },
+  } = form;
+
+  const { fields, append, remove } = useFieldArray({
+    name: "bookImd",
+    control,
+  });
+
+  const {
+    data: Ministerios,
+    isLoading: isLoadingDesignation,
+    mutate,
+  } = useFetch<any>(`ministerio/${params.id}`);
+
+  //#region DIRIGENTE
+  // Get current selected values DIRIGENTE
+  const memberDirigenteId = watch("memberDirigenteId");
+  const memberDirigenteSuplenteId = watch("memberDirigenteSuplenteId");
+
+  // Memoized values for performance
+  const memberDirigente = useMemo(() => {
+    return brothers?.find((brother) => brother.id === memberDirigenteId);
+  }, [brothers, memberDirigenteId]);
+
+  const memberDirigenteSuplente = useMemo(() => {
+    return brothers?.find(
+      (brother) => brother.id === memberDirigenteSuplenteId
+    );
+  }, [brothers, memberDirigenteSuplenteId]);
+
+  const filteredDirigenteBrothers = useMemo(() => {
+    return (
+      brothers?.filter((brother) => brother.id !== memberDirigenteId) || []
+    );
+  }, [brothers, memberDirigenteId]);
+
+  //#endregion DIRIGENTE
+
+  //#region MORADOR
+  // Get current selected values MORADOR
+  const memberMoradorId = watch("memberMoradorId");
+  const memberMoradorSuplenteId = watch("memberMoradorSuplenteId");
+
+  // Memoized values for performance
+  const memberMorador = useMemo(() => {
+    return brothers?.find((brother) => brother.id === memberMoradorId);
+  }, [brothers, memberMoradorId]);
+
+  const memberMoradorSuplente = useMemo(() => {
+    return brothers?.find((brother) => brother.id === memberMoradorSuplenteId);
+  }, [brothers, memberMoradorSuplenteId]);
+
+  const filteredbrothersMorador = useMemo(() => {
+    return (
+      brothers?.filter(
+        (brother) =>
+          ![memberDirigenteSuplenteId, memberDirigenteId].includes(brother.id)
+      ) || []
+    );
+  }, [brothers, memberDirigenteId, memberDirigenteSuplenteId]);
+
+  const filteredMorador = useMemo(() => {
+    return (
+      brothers?.filter(
+        (brother) =>
+          ![
+            memberMoradorId,
+            memberDirigenteSuplenteId,
+            memberDirigenteId,
+          ].includes(brother.id)
+      ) || []
+    );
+  }, [brothers, memberDirigenteId, memberDirigenteSuplenteId, memberMoradorId]);
+
+  //#endregion MORADOR
+
+  const lessonPoint = watch("lessonPoint");
+  const NameDesignation = watch("name");
+
+  //Os QTDs
+  const QTDSMembro = useMemo(() => {
+    return memberDirigente?.MinisterioMembroDirigente.filter(
+      (ts) =>
+        ts.lessonPoint === lessonPoint &&
+        ts.memberDirigenteId === memberDirigenteId
+    )?.length;
+  }, [
+    lessonPoint,
+    memberDirigente?.MinisterioMembroDirigente,
+    memberDirigenteId,
+  ]);
+
+  const QTDSuplente = useMemo(() => {
+    return memberDirigenteSuplente?.MinisterioSuplenteMembroDirigente.filter(
+      (ts) => ts.lessonPoint === lessonPoint && ts.memberDirigenteSuplenteId
+    )?.length;
+  }, [lessonPoint, memberDirigenteSuplente?.MinisterioSuplenteMembroDirigente]);
+
+  //_____________________________________________________________________________________
+  const QTDSMorador = useMemo(() => {
+    return memberMorador?.MinisteriooradorMembroMorador.filter(
+      (ts) =>
+        ts.lessonPoint === lessonPoint && ts.memberMoradorId === memberMoradorId
+    )?.length;
+  }, [
+    lessonPoint,
+    memberMorador?.MinisteriooradorMembroMorador,
+    memberMoradorId,
+  ]);
+
+  const QTDSMoradorSuplente = useMemo(() => {
+    return memberMoradorSuplente?.MinisterioSuplenteMembroMorador.filter(
+      (ts) =>
+        ts.lessonPoint === lessonPoint &&
+        ts.memberMoradorId === memberMoradorSuplenteId
+    )?.length;
+  }, [
+    lessonPoint,
+    memberMoradorSuplente?.MinisterioSuplenteMembroMorador,
+    memberMoradorSuplenteId,
+  ]);
+
+  // Custom hook for auto assignment
+  const { autoAssign } = useAutoAssignment({
+    brothers: brothers || [],
+    setPresidentId: (id) => setValue("memberDirigenteId", id),
+    setPrayerId: (id) => setValue("memberDirigenteSuplenteId", id),
+  });
+
+  const handleAutoAssignDirigente = async () => {
+    setIsAutoAssigningDirigente(true);
+    autoAssign();
+    setIsAutoAssigningDirigente(false);
+  };
+
+  //__________________________________________________________________
+  // Custom hook for auto assignment
+  const { autoAssign: autoAssignMemberMorador } = useAutoAssignment({
+    brothers: filteredbrothersMorador || [],
+    setPresidentId: (id) => setValue("memberMoradorId", id),
+    setPrayerId: (id) => setValue("memberMoradorSuplenteId", id),
+  });
+
+  const handleAutoAssignMemberMorador = async () => {
+    setIsAutoAssigningMorador(true);
+    autoAssignMemberMorador();
+    setIsAutoAssigningMorador(false);
+  };
+
+  const BothHandleAutoAssign = async () => {
+    handleAutoAssignMemberMorador();
+    handleAutoAssignDirigente();
+  };
+
+  // Form submission handler
+  async function onSubmit(values: ministerioType) {
+    try {
+      setSubmitError(null);
+
+      // Preparar os dados
+      const formData = {
+        ...(values.name === "discurso" || values.name === "explicarCrenca"
+          ? {
+              memberDirigenteId: values?.memberDirigenteId,
+              memberDirigenteSuplenteId: values?.memberDirigenteSuplenteId,
+              name: values.name,
+              reunioesDatesId: params?.id,
+              tema: values?.tema,
+              lessonPoint: values.lessonPoint,
+            }
+          : {
+              memberDirigenteId: values?.memberDirigenteId,
+              memberDirigenteSuplenteId: values?.memberDirigenteSuplenteId,
+              memberMoradorId: values?.memberMoradorId,
+              memberMoradorSuplenteId: values?.memberMoradorSuplenteId,
+              name: values.name,
+              reunioesDatesId: params?.id,
+              lessonPoint: `${bookImd[0].number}.${bookImd[0].points[0].point}`,
+            }),
+      };
+
+      await api.post("ministerio", formData);
+      toast({
+        title: "Designação registrada com sucesso",
+        description: "Os irmãos foram designados para as partes.",
+        variant: "default",
+      });
+
+      mutate(`ministerio/${params.id}`);
+      BroMutate();
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage =
+          error.response?.data?.error || "Erro ao registrar a designação";
+        setSubmitError(errorMessage);
+
+        toast({
+          title: "Erro ao registrar a designação",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro inesperado",
+          description:
+            "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
+    }
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Erro</AlertTitle>
+        <AlertDescription>
+          Não foi possível carregar os dados dos irmãos. Por favor, tente
+          novamente.
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isLoading || isLoadingDesignation) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center">Iniciar Conversa</CardTitle>
+          <CardDescription>
+            Selecione os irmãos para respectiva designação
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <PresidentEndPrayingSkeleton />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="w-full">
+      <CardContent className="">
+        <div className="flex items-center justify-between">
+          <RemoverDesignacaoDialog id={watch("reunioesDatesId") ?? ""} />
+          {
+            <Badge
+              className={cn(
+                `relative -top-4 left-10 rounded-full  ${CompletedDisignation(
+                  Ministerios?.length >= 3
+                )}`
+              )}
+              variant={"secondary"}
+            >
+              {Ministerios?.length}
+            </Badge>
+          }
+        </div>
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)} className="">
+            {submitError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription>{submitError}</AlertDescription>
+              </Alert>
+            )}
+            {JSON.stringify(
+              memberDirigente?.MinisterioMembroDirigente?.filter(
+                (a) =>
+                  a.lessonPoint === watch("lessonPoint") &&
+                  a.memberDirigenteId === watch("memberDirigenteId")
+              ).length
+            )}
+
+            <CardHeader className="w-full px-0">
+              <CardTitle className="flex flex-col">
+                <FormField
+                  control={control}
+                  name={"name"}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="sr-only">Nome</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value?.toString()}
+                      >
+                        <SelectTrigger id="nome" className="border-0 text-lg">
+                          <SelectValue placeholder="nome" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MinisterioType.map((data) => (
+                            <SelectItem key={data.value} value={data.value}>
+                              {data.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <span className="flex items-center gap-2 text-xs">
+                  <Clock10Icon size={14} /> 10 min
+                </span>
+              </CardTitle>
+              <CardDescription className="p-0">
+                Selecione os irmão para respectiva designação
+              </CardDescription>
+            </CardHeader>
+
+            <div className="grid gap-6 w-full">
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+                  {/* Presidente Section */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium">Dirigente</h3>
+
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src="/avatar/01.png" alt="Avatar" />
+                        <AvatarFallback className="uppercase">
+                          {memberDirigente
+                            ? memberDirigente.nome.slice(0, 2)
+                            : "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {memberDirigente?.nome || "Não Selecionado"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {memberDirigente?.contacto || "+244 ___________"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <FormField
+                      control={control}
+                      name="memberDirigenteId"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Selecione o irmão presidente</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value
+                                    ? brothers?.find(
+                                        (brother) => brother.id === field.value
+                                      )?.nome
+                                    : "Selecionar irmão..."}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0">
+                              <Command>
+                                <CommandInput placeholder="Buscar irmão..." />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    Nenhum irmão encontrado.
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {brothers?.map((brother, index) => (
+                                      <CommandItem
+                                        key={brother.id}
+                                        value={brother.nome}
+                                        onSelect={() => {
+                                          setValue(
+                                            "memberDirigenteId",
+                                            brother.id
+                                          );
+                                        }}
+                                      >
+                                        <div className="flex flex-1 items-start flex-col">
+                                          <p>{brother.nome}</p>
+                                          <div className="flex items-center gap-2">
+                                            <p className="text-xs text-muted-foreground">
+                                              {brother.carreira ||
+                                                brother.estado}
+                                            </p>
+                                            <span
+                                              className={`rounded-full flex items-center justify-center h-5 w-5 text-xs ${setThemeColor(
+                                                index
+                                              )}`}
+                                            >
+                                              {
+                                                brother.MinisterioMembroDirigente.filter(
+                                                  (des) =>
+                                                    des.name === watch("name")
+                                                ).length
+                                              }
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <Check
+                                          className={cn(
+                                            "ml-auto h-4 w-4",
+                                            field.value === brother.id
+                                              ? "opacity-100"
+                                              : "opacity-0"
+                                          )}
+                                        />
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <QTDsDesignation
+                      isPermitted={
+                        ["discurso", "explicarCrenca"].includes(
+                          NameDesignation
+                        ) &&
+                        lessonPoint != "" &&
+                        memberDirigenteId != ""
+                      }
+                      QTDSMembro={QTDSMembro ?? 0}
+                      lesson={lessonPoint ?? ""}
+                    />
+                  </div>
+
+                  {/* Oração Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium">
+                        Dirigente Suplente
+                      </h3>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                            <AlertCircle className="h-3 w-3" /> Voluntário
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              Caso haja um conveniente, atribua um voluntário
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src="/avatar/01.png" alt="Avatar" />
+                        <AvatarFallback className="uppercase">
+                          {memberDirigenteSuplente
+                            ? memberDirigenteSuplente.nome.slice(0, 2)
+                            : "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {memberDirigenteSuplente?.nome || "Não Selecionado"}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {memberDirigenteSuplente?.contacto ||
+                            "+244 ___________"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <FormField
+                      control={control}
+                      name="memberDirigenteSuplenteId"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Selecione o irmão para oração</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  className={cn(
+                                    "w-full justify-between",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                  disabled={!memberDirigenteId}
+                                >
+                                  {field.value
+                                    ? brothers?.find(
+                                        (brother) => brother.id === field.value
+                                      )?.nome
+                                    : memberDirigenteId
+                                    ? "Selecionar irmão..."
+                                    : "Selecione o dirigente primeiro"}
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0">
+                              <Command>
+                                <CommandInput placeholder="Buscar irmão..." />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    Nenhum irmão encontrado.
+                                  </CommandEmpty>
+                                  <CommandGroup>
+                                    {filteredDirigenteBrothers.map(
+                                      (brother, index) => (
+                                        <CommandItem
+                                          key={brother.id}
+                                          value={brother.nome}
+                                          onSelect={() => {
+                                            setValue(
+                                              "memberDirigenteSuplenteId",
+                                              brother.id
+                                            );
+                                          }}
+                                        >
+                                          <div className="flex flex-1 items-start flex-col">
+                                            <p>{brother.nome}</p>
+                                            <div className="flex items-center gap-2">
+                                              <p className="text-xs text-muted-foreground">
+                                                {brother.carreira ||
+                                                  brother.estado}
+                                              </p>
+                                              <span
+                                                className={`rounded-full flex items-center justify-center h-5 w-5 text-xs ${setThemeColor(
+                                                  index
+                                                )}`}
+                                              >
+                                                {
+                                                  brother.MinisterioSuplenteMembroDirigente.filter(
+                                                    (des) =>
+                                                      des.name === watch("name")
+                                                  ).length
+                                                }
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <Check
+                                            className={cn(
+                                              "ml-auto h-4 w-4",
+                                              field.value === brother.id
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                        </CommandItem>
+                                      )
+                                    )}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <QTDsDesignation
+                      isPermitted={
+                        ["discurso", "explicarCrenca"].includes(
+                          NameDesignation
+                        ) &&
+                        lessonPoint != "" &&
+                        memberDirigenteSuplenteId != ""
+                      }
+                      QTDSMembro={QTDSuplente ?? 0}
+                      lesson={lessonPoint ?? ""}
+                    />
+                  </div>
+                  {/* Lição */}
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
+                  {["discurso", "explicarCrenca"].includes(NameDesignation) && (
+                    <>
+                      {/*  Presidente Section  */}
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium">Morador</h3>
+
+                        <div className="flex items-center space-x-4">
+                          <Avatar>
+                            <AvatarImage src="/avatar/01.png" alt="Avatar" />
+                            <AvatarFallback className="uppercase">
+                              {memberMorador
+                                ? memberMorador.nome.slice(0, 2)
+                                : "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium leading-none">
+                              {memberMorador?.nome || "Não Selecionado"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {memberMorador?.contacto || "+244 ___________"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <FormField
+                          control={control}
+                          name="memberMoradorId"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>Selecione o irmão dirigente</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value
+                                        ? brothers?.find(
+                                            (brother) =>
+                                              brother.id === field.value
+                                          )?.nome
+                                        : "Selecionar irmão..."}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] p-0">
+                                  <Command>
+                                    <CommandInput placeholder="Buscar irmão..." />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        Nenhum irmão encontrado.
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {filteredbrothersMorador?.map(
+                                          (brother, index) => (
+                                            <CommandItem
+                                              key={brother.id}
+                                              value={brother.nome}
+                                              onSelect={() => {
+                                                setValue(
+                                                  "memberMoradorId",
+                                                  brother.id
+                                                );
+                                              }}
+                                            >
+                                              <div className="flex flex-1 items-start flex-col">
+                                                <p>{brother.nome}</p>
+                                                <div className="flex items-center gap-2">
+                                                  <p className="text-xs text-muted-foreground">
+                                                    {brother.carreira ||
+                                                      brother.estado}
+                                                  </p>
+                                                  <span
+                                                    className={`rounded-full flex items-center justify-center h-5 w-5 text-xs ${setThemeColor(
+                                                      index
+                                                    )}`}
+                                                  >
+                                                    {
+                                                      brother.MinisteriooradorMembroMorador.filter(
+                                                        (des) =>
+                                                          des.name ===
+                                                          watch("name")
+                                                      ).length
+                                                    }
+                                                  </span>
+                                                </div>
+                                              </div>
+                                              <Check
+                                                className={cn(
+                                                  "ml-auto h-4 w-4",
+                                                  field.value === brother.id
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                              />
+                                            </CommandItem>
+                                          )
+                                        )}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <QTDsDesignation
+                          isPermitted={
+                            ["discurso", "explicarCrenca"].includes(
+                              NameDesignation
+                            ) &&
+                            lessonPoint != "" &&
+                            memberMoradorId != ""
+                          }
+                          QTDSMembro={QTDSMorador ?? 0}
+                          lesson={lessonPoint ?? ""}
+                        />
+                      </div>
+
+                      {/* Oração Section  */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-medium">
+                            Morador Suplente
+                          </h3>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                                <AlertCircle className="h-3 w-3" /> Voluntário
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>
+                                  Caso haja um conveniente, atribua um
+                                  voluntário
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+
+                        <div className="flex items-center space-x-4">
+                          <Avatar>
+                            <AvatarImage src="/avatar/01.png" alt="Avatar" />
+                            <AvatarFallback className="uppercase">
+                              {memberMoradorSuplente
+                                ? memberMoradorSuplente.nome.slice(0, 2)
+                                : "?"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium leading-none">
+                              {memberMoradorSuplente?.nome || "Não Selecionado"}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {memberMoradorSuplente?.contacto ||
+                                "+244 ___________"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <FormField
+                          control={control}
+                          name="memberMoradorSuplenteId"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                              <FormLabel>
+                                Selecione o irmão para oração
+                              </FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      role="combobox"
+                                      className={cn(
+                                        "w-full justify-between",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                      disabled={!memberMoradorId}
+                                    >
+                                      {field.value
+                                        ? brothers?.find(
+                                            (brother) =>
+                                              brother.id === field.value
+                                          )?.nome
+                                        : memberMoradorId
+                                        ? "Selecionar irmão..."
+                                        : "Selecione o presidente primeiro"}
+                                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] p-0">
+                                  <Command>
+                                    <CommandInput placeholder="Buscar irmão..." />
+                                    <CommandList>
+                                      <CommandEmpty>
+                                        Nenhum irmão encontrado.
+                                      </CommandEmpty>
+                                      <CommandGroup>
+                                        {filteredMorador.map(
+                                          (brother, index) => (
+                                            <CommandItem
+                                              key={brother.id}
+                                              value={brother.nome}
+                                              onSelect={() => {
+                                                setValue(
+                                                  "memberMoradorSuplenteId",
+                                                  brother.id
+                                                );
+                                              }}
+                                            >
+                                              <div className="flex flex-1 items-start flex-col">
+                                                <p>{brother.nome}</p>
+                                                <div className="flex items-center gap-2">
+                                                  <p className="text-xs text-muted-foreground">
+                                                    {brother.carreira ||
+                                                      brother.estado}
+                                                  </p>
+                                                  <span
+                                                    className={`rounded-full flex items-center justify-center h-5 w-5 text-xs ${setThemeColor(
+                                                      index
+                                                    )}`}
+                                                  >
+                                                    {
+                                                      brother.MinisterioSuplenteMembroMorador.filter(
+                                                        (des) =>
+                                                          des.name ===
+                                                          watch("name")
+                                                      ).length
+                                                    }
+                                                  </span>
+                                                </div>
+                                              </div>
+                                              <Check
+                                                className={cn(
+                                                  "ml-auto h-4 w-4",
+                                                  field.value === brother.id
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                              />
+                                            </CommandItem>
+                                          )
+                                        )}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <QTDsDesignation
+                          isPermitted={
+                            ["discurso", "explicarCrenca"].includes(
+                              NameDesignation
+                            ) &&
+                            lessonPoint != "" &&
+                            memberMoradorSuplenteId != ""
+                          }
+                          QTDSMembro={QTDSMoradorSuplente ?? 0}
+                          lesson={lessonPoint ?? ""}
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Livro de conselho TH */}
+                  {["discurso", "explicarCrenca"].includes(NameDesignation) ? (
+                    <div className="space-y-4">
+                      <FormField
+                        control={control}
+                        name="lessonPoint"
+                        render={({ field }) => (
+                          <FormItem className="flex flex-col">
+                            <FormLabel className="">
+                              Selecione ponto de conselho
+                            </FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                      "w-full justify-between",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      <span className="flex items-center space-x-2">
+                                        <Badge
+                                          className="rounded-full"
+                                          variant={"outline"}
+                                        >
+                                          {" "}
+                                          {
+                                            BookTH?.find(
+                                              ({ lesson }) =>
+                                                lesson.toString() ===
+                                                field.value
+                                            )?.lesson
+                                          }
+                                        </Badge>
+                                        <span>
+                                          {
+                                            BookTH?.find(
+                                              ({ lesson }) =>
+                                                lesson.toString() ===
+                                                field.value
+                                            )?.name
+                                          }
+                                        </span>
+                                      </span>
+                                    ) : (
+                                      "Selecionar ponto..."
+                                    )}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[300px] p-0">
+                                <Command>
+                                  <CommandInput placeholder="Buscar pontos..." />
+                                  <CommandList>
+                                    <CommandEmpty>
+                                      Nenhum ponto encontrado.
+                                    </CommandEmpty>
+                                    <CommandGroup>
+                                      {BookTH?.map(({ lesson, name }) => (
+                                        <CommandItem
+                                          key={lesson}
+                                          value={lesson.toString()}
+                                          onSelect={() => {
+                                            setValue(
+                                              "lessonPoint",
+                                              lesson.toString()
+                                            );
+                                          }}
+                                        >
+                                          <div className="flex flex-1 items-start flex-col">
+                                            <p>{name}</p>
+                                            <div className="flex items-center gap-2">
+                                              <p className="text-xs text-muted-foreground">
+                                                Ponto de conselho:
+                                              </p>
+                                              <span
+                                                className={`rounded-full flex items-center justify-center h-5 w-5 text-xs ${setThemeColor(
+                                                  lesson
+                                                )}`}
+                                              >
+                                                {lesson}
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <Check
+                                            className={cn(
+                                              "ml-auto h-4 w-4",
+                                              field.value === lesson.toString()
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={control}
+                        name="tema"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tema</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Digite o tema" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    /* Livro de conselho IMD */
+                    <div className="">
+                      {fields.length > 0 && (
+                        <div className="space-y-4">
+                          {fields.map((field, index) => (
+                            <div
+                              key={field.id}
+                              className="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                            >
+                              <FormField
+                                control={control}
+                                name={`bookImd.${index}.number`}
+                                render={({ field }) => (
+                                  <FormItem className="flex-1 w-full sm:w-auto">
+                                    <FormLabel
+                                      className={cn(index !== 0 && "sr-only")}
+                                    >
+                                      Lição
+                                    </FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={
+                                        field.value || "Selecionar o ponto..."
+                                      }
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione o serviço" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {bookImd.map((book) => (
+                                          <React.Fragment key={book.number}>
+                                            <SelectItem
+                                              key={book.number}
+                                              value={book.number ?? ""}
+                                            >
+                                              <div className="flex items-center gap-x-2">
+                                                <Badge
+                                                  className="rounded-full"
+                                                  variant={"destructive"}
+                                                >
+                                                  {book.number}
+                                                </Badge>
+
+                                                <span>{book.name}</span>
+                                              </div>
+                                            </SelectItem>
+                                          </React.Fragment>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={control}
+                                name={`bookImd.${index}.points.${index}.point`}
+                                render={({ field }) => (
+                                  <FormItem className="flex-1 w-full sm:w-auto">
+                                    <FormLabel
+                                      className={cn(index !== 0 && "sr-only")}
+                                    >
+                                      Pontos
+                                    </FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={
+                                        field.value || "Selecionar o ponto..."
+                                      }
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione a posição" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {bookImd
+                                          .find(
+                                            (data) =>
+                                              data.number ===
+                                              watch(`bookImd.${index}.number`)
+                                          )
+                                          ?.points.map((book) => {
+                                            return (
+                                              <SelectItem
+                                                key={book.point}
+                                                value={
+                                                  book.point?.toString() ?? ""
+                                                }
+                                              >
+                                                <div className="flex items-center gap-x-2 text-ellipsis max-w-full text-clip c">
+                                                  <Badge
+                                                    className="rounded-full"
+                                                    variant={"secondary"}
+                                                  >
+                                                    {book.point}
+                                                  </Badge>
+
+                                                  <span className="text-ellipsis">
+                                                    {book.name}
+                                                  </span>
+                                                </div>
+                                              </SelectItem>
+                                            );
+                                          })}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="p-2 rounded-full mt-6"
+                                onClick={() => remove(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="w-full sm:w-auto p-2 rounded-full"
+                        onClick={() =>
+                          append({
+                            number: "1",
+                            points: [{ point: "3", subpoint: [] }],
+                          })
+                        }
+                      >
+                        <span className="sr-only">Adicionar pontos</span>
+                        <PlusCircle className="size-4 " />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between">
+                  <div className="grid gap-1 grid-cols-2">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            size="icon"
+                            className="rounded-full"
+                            onClick={BothHandleAutoAssign}
+                            disabled={
+                              isAutoAssigningDirigente ||
+                              isAutoAssigningMorador ||
+                              !brothers ||
+                              brothers.length < 2
+                            }
+                          >
+                            <MagnetIcon
+                              size={20}
+                              className={cn(
+                                isAutoAssigningDirigente && "animate-pulse"
+                              )}
+                            />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Atribuir designação de forma automática ao Dirigente
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={
+                      isSubmitting ||
+                      !memberDirigenteId ||
+                      !memberDirigenteSuplenteId
+                    }
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      "Salvar Designação"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}
+

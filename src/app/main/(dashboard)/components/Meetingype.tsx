@@ -20,21 +20,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { PresidentEndPraying } from "./CardsDesignations/LifeMinistry/PresidentEndPraying";
-import { Speeching } from "./CardsDesignations/LifeMinistry/Speeching";
-import { SpirutalDiamond } from "./CardsDesignations/LifeMinistry/SpiritualDiamond";
-import { ReadingBible } from "./CardsDesignations/LifeMinistry/ReadingBible";
-import { StartingTalking1 } from "./CardsDesignations/LifeMinistry/StartingTalking1";
-import { StartingTalking2 } from "./CardsDesignations/LifeMinistry/StartingTalking2";
-import { StudentSpeeching } from "./CardsDesignations/LifeMinistry/StudentSpeeching";
-import { FirstPart } from "./CardsDesignations/LifeMinistry/FirstPart";
-import { StudingBibleBook } from "./CardsDesignations/LifeMinistry/StudingBibleBook";
-import { FinalPart } from "./CardsDesignations/LifeMinistry/FinalPraying";
-import { President } from "./CardsDesignations/WatchTowerSpeeching/President";
-import { InicialPrayer } from "./CardsDesignations/WatchTowerSpeeching/InicialPrayer";
-import { Orador } from "./CardsDesignations/WatchTowerSpeeching/Orador";
+import { Tesouros } from "./CardsDesignations/LifeMinistry/Tesouros";
+import { MinisterioPage } from "./CardsDesignations/LifeMinistry/Ministerios";
+
+import { CristaoPage } from "./CardsDesignations/LifeMinistry/Cristaos";
+import { FinalParts } from "./CardsDesignations/LifeMinistry/FinalPraying";
+import { ReuniaoPublica } from "./CardsDesignations/WatchTowerSpeeching/ReuniaoPublica";
 import { WatchTowerLead } from "./CardsDesignations/WatchTowerSpeeching/WatchTowerLead";
-import { ReaderWatchTower } from "./CardsDesignations/WatchTowerSpeeching/ReaderWatchTower";
-import { FinalPrayer } from "./CardsDesignations/WatchTowerSpeeching/FinalPrayer";
 
 export const Designations = [
   {
@@ -325,7 +317,7 @@ export function MeetingTypePage() {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                  <PresidentEndPraying />
+                  <PresidentEndPraying params={{ id: "" }} />
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -340,9 +332,7 @@ export function MeetingTypePage() {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                  <Speeching />
-                  <SpirutalDiamond />
-                  <ReadingBible />
+                  <Tesouros params={{ id: "" }} />
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -357,9 +347,7 @@ export function MeetingTypePage() {
               </AccordionTrigger>
               <AccordionContent className="">
                 <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                  <StartingTalking1 />
-                  <StartingTalking2 />
-                  <StudentSpeeching />
+                  <MinisterioPage params={{ id: "" }} />
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -375,8 +363,7 @@ export function MeetingTypePage() {
               <AccordionContent>
                 <AccordionContent>
                   <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                    <FirstPart />
-                    <StudingBibleBook />
+                    <CristaoPage params={{ id: "" }} />
                   </div>
                 </AccordionContent>
               </AccordionContent>
@@ -391,7 +378,7 @@ export function MeetingTypePage() {
               <AccordionContent>
                 <AccordionContent>
                   <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                    <FinalPart />
+                    <FinalParts params={{ id: "" }} />
                   </div>
                 </AccordionContent>
               </AccordionContent>
@@ -469,9 +456,7 @@ export function MeetingTypePage() {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                  <President />
-                  <InicialPrayer />
-                  <Orador />
+                  <ReuniaoPublica params={{ id: "" }} />
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -486,9 +471,8 @@ export function MeetingTypePage() {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                  <WatchTowerLead />
-                  <ReaderWatchTower />
-                  <FinalPrayer />
+                  <WatchTowerLead params={{id:""}} />
+                 
                 </div>
               </AccordionContent>
             </AccordionItem>

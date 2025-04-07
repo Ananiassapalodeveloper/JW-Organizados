@@ -11,7 +11,7 @@ export default function MailPage() {
   const defaultCollapsed = collapsed ? JSON.parse(collapsed.value) : undefined;
 
   return (
-    <div className="hidden flex-col md:flex">
+    <div className="flex-col flex">
       <Mail
         accounts={accounts}
         mails={mails}

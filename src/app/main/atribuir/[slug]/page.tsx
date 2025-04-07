@@ -1,389 +1,373 @@
-import { Metadata } from "next";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { format } from "date-fns";
+import { notFound } from "next/navigation";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import {
-  Circle,
   CircleCheck,
-  CircleCheckIcon,
-  CircleXIcon,
   LampDeskIcon,
-  ListCheck,
+  ListChecksIcon as ListCheck,
+  Loader,
+  CalendarRange,
+  Calendar,
 } from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+
 import { PresidentEndPraying } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/PresidentEndPraying";
-import { Speeching } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/Speeching";
-import { SpirutalDiamond } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/SpiritualDiamond";
-import { ReadingBible } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/ReadingBible";
-import { StartingTalking1 } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/StartingTalking1";
-import { StartingTalking2 } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/StartingTalking2";
-import { StudentSpeeching } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/StudentSpeeching";
-import { FirstPart } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/FirstPart";
-import { StudingBibleBook } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/StudingBibleBook";
-import { FinalPart } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/FinalPraying";
-import { President } from "@/app/main/(dashboard)/components/CardsDesignations/WatchTowerSpeeching/President";
-import { InicialPrayer } from "@/app/main/(dashboard)/components/CardsDesignations/WatchTowerSpeeching/InicialPrayer";
-import { Orador } from "@/app/main/(dashboard)/components/CardsDesignations/WatchTowerSpeeching/Orador";
+import { Tesouros } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/Tesouros";
+import { MinisterioPage } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/Ministerios";
+import { CristaoPage } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/Cristaos";
+import { FinalParts } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/FinalPraying";
 import { WatchTowerLead } from "@/app/main/(dashboard)/components/CardsDesignations/WatchTowerSpeeching/WatchTowerLead";
-import { ReaderWatchTower } from "@/app/main/(dashboard)/components/CardsDesignations/WatchTowerSpeeching/ReaderWatchTower";
-import { FinalPrayer } from "@/app/main/(dashboard)/components/CardsDesignations/WatchTowerSpeeching/FinalPrayer";
+import { ReuniaoPublica } from "../../(dashboard)/components/CardsDesignations/WatchTowerSpeeching/ReuniaoPublica";
+import { CardRegisterReunioesPartes } from "./components/CardRegisterReunioes";
 import { setThemeColor } from "@/store/original-file";
-import { Designations1 } from "../../(dashboard)/components/Meetingype";
-import { changeColorStatus } from "../page";
-import Link from "next/link";
-// import { CalendarDateRangePicker } from "../../(dashboard)/components/date-range-picker";
+import { parseSlug } from "@/lib/slugUtils";
+import { useFetch } from "@/hooks/useFetch";
+import { formatDateRange } from "@/lib/formatDateRange";
+
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Desiganações",
-  description: "Registar Designações",
-};
+type DateTime = {
+  id: string;
+  from: string;
+  to: string;
+  mesId: string;
+}[];
 
-const AllDesignations = [
-  {
-    month: "3-9.02.2025",
-    value: "jan",
-    icon: CircleCheckIcon,
-    status: "concluido",
-    completed: "preenchida",
-  },
-  {
-    month: "10-16.02.2025",
-    value: "fer",
-    icon: CircleCheckIcon,
-    status: "concluido",
-    completed: "preenchida",
-  },
-  {
-    month: "17-23.02.2025",
-    value: "mar",
-    status: "decorrendo",
-    icon: Circle,
-    completed: "preenchida",
-  },
-  {
-    month: "24.02 á 03.03.2025",
-    value: "abr",
-    status: "naoInicializado",
-    completed: "preenchida",
-    icon: Circle,
-  },
-];
+const statusColors = {
+  concluido: "text-green-500 bg-green-500/10",
+  decorrendo: "text-amber-500 bg-amber-500/10",
+  naoInicializado: "text-slate-500 bg-slate-500/10",
+};
 
 export default function DashboardPage({
   params,
 }: {
   params: { slug: string };
 }) {
+  const {
+    data: datesReunioes,
+    error,
+    isLoading,
+  } = useFetch<DateTime>(`reunioes_date/${parseSlug(params.slug)?.id}`);
+
+  // Format dates before returning
+  const formattedReuniaoDates = datesReunioes?.map((reuniao) => ({
+    ...reuniao,
+    from: format(new Date(reuniao.from), "dd/MM/yyyy"),
+    to: format(new Date(reuniao.to), "dd/MM/yyyy"),
+  }));
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <div className="flex flex-col items-center gap-2">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Carregando designações...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-destructive">Erro</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p>Houve um erro ao carregar as designações. Tente novamente.</p>
+            <Button className="mt-4" variant="outline" asChild>
+              <Link href="/main">Voltar ao início</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const parsed = parseSlug(params.slug);
+  if (!parsed) return notFound();
+
+  const { ano, mes } = parsed;
+
   return (
-    <>
-      <div className="space-y-16 mt-10">
-        <div className="text-lg text-white/80 bg-green-400/10 p-1 rounded-lg">
-          <LampDeskIcon /> Eis as Designações - {params.slug}, 2025
+    <div className="container mx-auto py-8 max-w-7xl">
+      <header className="mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Designações</h1>
+            <div className="flex items-center gap-2 mt-2">
+              <Badge variant="outline" className="text-sm font-medium">
+                {mes}
+              </Badge>
+              <Badge variant="outline" className="text-sm font-medium">
+                {ano}
+              </Badge>
+            </div>
+          </div>
+
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <CalendarRange className="h-4 w-4" />
+                Adicionar período
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px]">
+              <CardRegisterReunioesPartes params={params} />
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 hidden">
-          {AllDesignations.map((data) => (
-            <Link
-              href={`/main/registar/${data.month}`}
-              key={data.value}
-              className="h-full"
-            >
-              <Card className="h-full">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {data.completed}
-                  </CardTitle>
-                  <data.icon className={changeColorStatus(data.status)} />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{data.month}</div>
-                  <p className="text-xs text-muted-foreground">{data.status}</p>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+          <LampDeskIcon className="h-5 w-5 text-emerald-500" />
+          <p className="text-sm font-medium">
+            Designações disponíveis para {mes}, {ano}
+          </p>
         </div>
-        <Tabs
-          defaultValue="3-9.02.2025"
-          className="space-y-4"
-          orientation="vertical"
-        >
-          <TabsList className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {AllDesignations.map((data) => (
-              <TabsTrigger
-                value={data.month}
-                key={data.value}
-                className="gap-2 items-center"
-              >
-                <data.icon
-                  className={cn(changeColorStatus(data.status), "size-5")}
-                />
-                {data.month}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          {AllDesignations.map((data) => (
-            <TabsContent
-              key={data.month}
-              value={data.month}
-              className="space-y-4"
-            >
-              <Data data={{ data: data.month }} />
+      </header>
+
+      {formattedReuniaoDates && formattedReuniaoDates.length > 0 ? (
+        <Tabs defaultValue={formattedReuniaoDates[0]?.id} className="space-y-6">
+          <div className="bg-card rounded-lg border shadow-sm p-1">
+            <TabsList className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 p-1 h-auto">
+              {formattedReuniaoDates.map((data, index) => (
+                <TabsTrigger
+                  key={data.id}
+                  value={data.id}
+                  className={cn(
+                    "flex items-center justify-between py-3 px-4 h-auto",
+                    index === 0 && "bg-primary/10"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>
+                      {/* {data.from}-{data.to} */}
+                      {formatDateRange(data.from, data.to)}
+                    </span>
+                  </div>
+                  <CircleCheck
+                    className={cn(
+                      "h-4 w-4 ml-2",
+                      index === 0 ? "text-primary" : "text-muted-foreground"
+                    )}
+                    fill={index === 0 ? "currentColor" : "none"}
+                  />
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          {formattedReuniaoDates.map((data) => (
+            <TabsContent key={data.id} value={data.id} className="space-y-6">
+              <MeetingData
+                params={{
+                  id: `${formatDateRange(data.from, data.to, {
+                    showMonthAsText: true,
+                  })}`,
+                }}
+                id={data.id}
+              />
             </TabsContent>
           ))}
         </Tabs>
-      </div>
-    </>
+      ) : (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-xl font-medium mb-2">
+              Nenhum período encontrado
+            </h3>
+            <p className="text-muted-foreground text-center mb-6">
+              Não há períodos de reunião registrados para este mês. Adicione um
+              novo período para começar.
+            </p>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button>Adicionar período</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <CardRegisterReunioesPartes params={params} />
+              </DialogContent>
+            </Dialog>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
-export function Data({ data }: { data: { data: string } }) {
-  return (
-    <main >
-      <Tabs
-        defaultValue="meetingWeekday"
-        className="space-y-4"
-        orientation="vertical"
-      >
-        <TabsList>
-          <TabsTrigger value="meetingWeekday">
-            Reunião do meio de semana
-          </TabsTrigger>
-          <TabsTrigger value="meetingWeekend">
-            Reunião do final de semana
-          </TabsTrigger>
-        </TabsList>
+function MeetingData({ params, id }: { id: string; params: { id: string } }) {
+  const [activeTab, setActiveTab] = useState("meetingWeekday");
 
-        <TabsContent value="meetingWeekday" className="space-y-6">
-          <div className="rounded-full">
-            <div className="my-10 flex gap-2 items-center bg-green-500/10 text-white p-2">
-              <ListCheck /> Programa da Designações da semana {data.data}
-              {/* <CalendarDateRangePicker /> */}
-            </div>
-          </div>
-          <div>
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button
+          variant={activeTab === "meetingWeekday" ? "default" : "outline"}
+          className="flex-1 justify-start gap-2"
+          onClick={() => setActiveTab("meetingWeekday")}
+        >
+          <Calendar className="h-4 w-4" />
+          Reunião do meio de semana
+        </Button>
+        <Button
+          variant={activeTab === "meetingWeekend" ? "default" : "outline"}
+          className="flex-1 justify-start gap-2"
+          onClick={() => setActiveTab("meetingWeekend")}
+        >
+          <Calendar className="h-4 w-4" />
+          Reunião do final de semana
+        </Button>
+      </div>
+
+      <div className="rounded-lg border bg-card shadow-sm">
+        <div className="flex items-center gap-2 p-4 border-b">
+          <ListCheck className="h-5 w-5 text-primary" />
+          <h2 className="font-medium">Programa da semana {params.id}</h2>
+        </div>
+
+        {activeTab === "meetingWeekday" && (
+          <div className="p-4">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-0">
-                <AccordionTrigger>
-                  <span
-                    className={`text-base p-2 rounded-lg ${setThemeColor(0)}`}
+                <AccordionTrigger className="py-4">
+                  <Badge
+                    variant="outline"
+                    className={cn("px-3 py-1", setThemeColor(0))}
                   >
                     PARTES INICIAS
-                  </span>
+                  </Badge>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                    <PresidentEndPraying />
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <PresidentEndPraying params={{ id: id }} />
                   </div>
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-1">
-                <AccordionTrigger>
-                  <span
-                    className={`text-base p-2 rounded-lg ${setThemeColor(1)}`}
+                <AccordionTrigger className="py-4">
+                  <Badge
+                    variant="outline"
+                    className={cn("px-3 py-1", setThemeColor(1))}
                   >
                     TESOUROS DA PALAVRA DE DEUS
-                  </span>
+                  </Badge>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                    <Speeching />
-                    <SpirutalDiamond />
-                    <ReadingBible />
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="grid gap-4">
+                    <Tesouros params={{ id }} />
                   </div>
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-2">
-                <AccordionTrigger>
-                  <span
-                    className={`text-base p-2 rounded-lg ${setThemeColor(2)}`}
+                <AccordionTrigger className="py-4">
+                  <Badge
+                    variant="outline"
+                    className={cn("px-3 py-1", setThemeColor(2))}
                   >
                     EMPENHE-SE NO MINISTÉRIO
-                  </span>
+                  </Badge>
                 </AccordionTrigger>
-                <AccordionContent className="">
-                  <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                    <StartingTalking1 />
-                    <StartingTalking2 />
-                    <StudentSpeeching />
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="grid gap-4">
+                    <MinisterioPage params={{ id }} />
                   </div>
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-3">
-                <AccordionTrigger>
-                  <span
-                    className={`text-base p-2 rounded-lg ${setThemeColor(3)}`}
+                <AccordionTrigger className="py-4">
+                  <Badge
+                    variant="outline"
+                    className={cn("px-3 py-1", setThemeColor(3))}
                   >
                     VIVER COMO CRISTÃOS
-                  </span>
+                  </Badge>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <AccordionContent>
-                    <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                      <FirstPart />
-                      <StudingBibleBook />
-                    </div>
-                  </AccordionContent>
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="grid gap-4">
+                    <CristaoPage params={{ id }} />
+                  </div>
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-4">
-                <AccordionTrigger>
-                  <span
-                    className={`p-2 rounded-lg text-sm ${setThemeColor(0)}`}
+                <AccordionTrigger className="py-4">
+                  <Badge
+                    variant="outline"
+                    className={cn("px-3 py-1", setThemeColor(0))}
                   >
                     PARTES FINAIS
-                  </span>
+                  </Badge>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <AccordionContent>
-                    <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                      <FinalPart />
-                    </div>
-                  </AccordionContent>
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <FinalParts params={{ id }} />
+                  </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </div>
-        </TabsContent>
-        <TabsContent value="meetingWeekend" className="space-y-4">
-          <div className="rounded-full">
-            <h1 className=" my-10 flex gap-2 items-center bg-green-500/10 text-white p-2">
-              <ListCheck /> Programa da Designações da semana {data.data}
-            </h1>
-          </div>
-          <div>
+        )}
+
+        {activeTab === "meetingWeekend" && (
+          <div className="p-4">
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-0">
-                <AccordionTrigger>
-                  <span
-                    className={`text-base p-2 rounded-lg ${setThemeColor(0)}`}
+                <AccordionTrigger className="py-4">
+                  <Badge
+                    variant="outline"
+                    className={cn("px-3 py-1", setThemeColor(0))}
                   >
                     REUNIÃO PÚBLICA
-                  </span>
+                  </Badge>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                    <President />
-                    <InicialPrayer />
-                    <Orador />
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="grid gap-4">
+                    <ReuniaoPublica params={{ id }} />
                   </div>
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-1">
-                <AccordionTrigger>
-                  <span
-                    className={`text-base p-2 rounded-lg ${setThemeColor(1)}`}
+                <AccordionTrigger className="py-4">
+                  <Badge
+                    variant="outline"
+                    className={cn("px-3 py-1", setThemeColor(1))}
                   >
                     ESTUDO DE A SENTINELA
-                  </span>
+                  </Badge>
                 </AccordionTrigger>
-                <AccordionContent>
-                  <div className="items-start  gap-6 rounded-lg p-8 md:grid lg:grid-cols-2 xl:grid-cols-3 w-full">
-                    <WatchTowerLead />
-                    <ReaderWatchTower />
-                    <FinalPrayer />
+                <AccordionContent className="pt-2 pb-4">
+                  <div className="grid gap-4">
+                    <WatchTowerLead params={{ id }} />
                   </div>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </div>
-          <div>
-            <Card className="col-span-3">
-              <CardHeader>
-                <CardTitle>Programa da Designações</CardTitle>
-                <CardDescription>
-                  Programa da Designações da semana 10 A 16 DE FEVEREIRO
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-6 ">
-                {Designations1.map((data, i) => (
-                  <ul key={data.name} className="list-disc">
-                    <li
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-lg ${setThemeColor(
-                        i
-                      )}`}
-                    >
-                      {data.name}
-                    </li>
-
-                    {data.designation.map((e, i) => (
-                      <ul key={e.name} className="list-disc list-inside">
-                        <HoverCard>
-                          {e.brother.map((data, index) => {
-                            return (
-                              <HoverCardTrigger key={index}>
-                                <li>{"name" in data && data.name}</li>
-                              </HoverCardTrigger>
-                            );
-                          })}
-                          <HoverCardContent>
-                            <div className="flex flex-col p-4 bg-background/50 backdrop-blur">
-                              <div className="flex items-start mb-4">
-                                <h3 className="text-sm text-muted-foreground">
-                                {"name" in data && data.name}
-                                </h3>
-                              </div>
-                              <div className="flex flex-col">
-                                <div>
-                                  <p className="text-lg font-bold">
-                                    Lição 3 Ame As Pessoas
-                                  </p>
-                                  <div className="flex justify-between gap-1 mt-1">
-                                    <span
-                                      className={`p-2 rounded-lg text-sm ${
-                                        i % 2 === 0
-                                          ? "text-green-900"
-                                          : "text-red-500"
-                                      }`}
-                                    >
-                                      {i % 2 === 0 ? (
-                                        <span className="ftext-base p-2 rounded-lg lex items-center justify-between gap-2">
-                                          <CircleCheck fill="green" />{" "}
-                                          Preenchido{" "}
-                                        </span>
-                                      ) : (
-                                        <span className="ftext-base p-2 rounded-lg lex items-center justify-between gap-2">
-                                          <CircleXIcon fill="red" /> Não
-                                          Preenchido{" "}
-                                        </span>
-                                      )}
-                                    </span>
-                                  </div>
-                                </div>
-                                {i % 2 === 0 && "Irmão Ananias Tomás"}
-                              </div>
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                      </ul>
-                    ))}
-                  </ul>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </main>
+        )}
+      </div>
+    </div>
   );
 }

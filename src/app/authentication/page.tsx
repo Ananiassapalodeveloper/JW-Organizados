@@ -1,5 +1,4 @@
 import { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
 
 import { cn } from "@/lib/utils"
@@ -13,24 +12,8 @@ export const metadata: Metadata = {
 
 export default function AuthenticationPage() {
   return (
-    <>
-      <div className="md:hidden">
-        <Image
-          src="/examples/authentication-light.png"
-          width={1280}
-          height={843}
-          alt="Authentication"
-          className="block dark:hidden"
-        />
-        <Image
-          src="/examples/authentication-dark.png"
-          width={1280}
-          height={843}
-          alt="Authentication"
-          className="hidden dark:block"
-        />
-      </div>
-      <div className="container relative hidden h-[800px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
+    
+      <div className="container w-screen h-screen bg-red-500 relative h-[800px] flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
         <Link
           href="/examples/authentication"
           className={cn(
@@ -38,7 +21,7 @@ export default function AuthenticationPage() {
             "absolute right-4 top-4 md:right-8 md:top-8"
           )}
         >
-          Login
+          Iniciar sessão
         </Link>
         <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
           <div className="absolute inset-0 bg-zinc-900" />
@@ -99,6 +82,5 @@ export default function AuthenticationPage() {
           </div>
         </div>
       </div>
-    </>
   )
 }

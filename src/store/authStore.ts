@@ -1,16 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // store/authStore.ts
 import { create } from "zustand"; // Se ocorrer erro, verifique o "esModuleInterop" no tsconfig.json
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer"; // Importa o middleware Immer
 
 export interface User {
-  id: string;
-  email: string;
+  nome: string;
+  password: string;
   // Outros campos que você precise
 }
 
 interface AuthState {
-  user: User | null;
+  user: any | null;
   token: string | null;
   login: (user: User, token: string) => void;
   logout: () => void;

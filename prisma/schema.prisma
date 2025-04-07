@@ -10,26 +10,451 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-
-
-
-model Member {
-  id                 String  @id @default(uuid())
-  nome               String
-  posicao            String?
-  estado             String?
-  privilegioServico  String?
-  genero             String
-  carreira           String?
-  funcao             String?
+  url      = "file:./dev.db"
 }
 
 model User {
-  id       String @id @default(uuid())
-  email    String @unique
-  password String
-  name     String
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
   createdAt DateTime @default(now())
 }
+
+enum EstadoEnum {
+  BATIZADO
+  MATRICULADO
+  ASSOCIADO
+}
+
+enum CarreiraEnum {
+  PIONEIRO_REGULAR
+  PIONEIRO_AUXILIAR
+}
+
+enum DadivaEnum {
+  ANCIAO
+  SERVO_MINISTERIAL
+}
+
+enum PosicaoEnum {
+  DIRIGENTE
+  AJUDANTE
+}
+
+enum ServicoEnum {
+  CONTAS
+  MANUTENCAO
+  TERRITORIO
+  LITERATURA
+  SOM_AUDIO
+}
+
+enum SexoEnum {
+  M
+  F
+}
+
+enum MinisterioEnum {
+  iniciarConversa1
+  iniciarConversa2
+  iniciarConversa3
+  manterInteresse
+  fazerDisciplo
+  explicarCrenca
+  discurso
+}
+
+enum CristaoEnum {
+  parte1
+  parte2
+  estudoBiblico
+}
+
+enum ReuniaoPublicaEnum {
+  presidente
+  oracaoInicial
+  orador
+}
+
+enum SentinelaEnum {
+  dirigente
+  leitor
+  oracaoFinal
+}
+
+model Membro {
+  id             String    @id @default(uuid())
+  nome           String    @unique
+  email          String?   @unique
+  createdAt      DateTime  @default(now())
+  password       String    @default("1234")
+  contacto       String
+  dataNascimento DateTime?
+  dataMatricula  DateTime?
+  dataPublicador DateTime?
+  dataBaptismo   DateTime?
+  dataAuxiliar   DateTime?
+  dataRegular    DateTime?
+  descricao      String?
+  studentsId     String?
+  sexo           SexoEnum  @default(M)
+
+  // Relacionamentos Muitos-para-Um
+  estado   EstadoEnum    @default(BATIZADO)
+  carreira CarreiraEnum?
+  dadiva   DadivaEnum?
+
+  // Relacionamento com HierarquiaMembro
+  hierarquiaMembro HierarquiaMembro? @relation("HierarquiaMembro")
+
+  // Relação de hierarquia (um membro pode ter um superior e subordinados)
+  subordinados HierarquiaMembro[] @relation("MembroSuperior")
+
+  // Relacionamento Muitos-para-Muitos com Serviço e Posição
+  servicos ServicoMembro[]
+
+  //grupo
+  grupoId String?
+  grupo   Grupo?  @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+
+  // Se o membro for dirigente ou ajudante, ele estará nesses relacionamentos
+  dirige Grupo? @relation("DirigenteGrupo")
+  ajuda  Grupo? @relation("AjudanteGrupo")
+
+  // Um membro pode ter vários estudantes
+  students Students[] @relation("MembroEstudantes")
+
+  // Um membro pode deixar várias tarefas
+  tasks Tasks[]
+
+  // Se um membro também for estudante, referenciamos Students (Relacionamento 1:1)
+  studentInfo Students? @relation(name: "EstudanteComoMembro")
+
+  //Reunião
+
+  PartesIniciasDono     PartesInicias[] @relation("ParteMembro")
+  PartesIniciasSuplente PartesInicias[] @relation("ParteSuplente")
+
+  Tesouros         Tesouros[] @relation("ParteMembro")
+  TesourosSuplente Tesouros[] @relation("ParteSuplente")
+
+  MinisterioMembroDirigente         Ministerio[] @relation("membroDirigente")
+  MinisteriooradorMembroMorador     Ministerio[] @relation("membroMorador")
+  MinisterioSuplenteMembroDirigente Ministerio[] @relation("suplenteMembroDirigente")
+  MinisterioSuplenteMembroMorador   Ministerio[] @relation("suplenteMembroMorador")
+
+  CristaoParteMembro                 Cristao[] @relation("ParteMembro")
+  CristaoParteSuplente               Cristao[] @relation("ParteSuplente")
+  CristaoLeitorEstudoBiblico         Cristao[] @relation("ParteLeitorMembro")
+  CristaoLeitorEstudoBiblicoSuplente Cristao[] @relation("ParteLeitorMembroSuplente")
+
+  PartesFinaisParteMembro   PartesFinais[] @relation("ParteMembro")
+  PartesFinaisParteSuplente PartesFinais[] @relation("ParteSuplente")
+
+  ReuniaoPublica              ReuniaoPublica[] @relation("ParteMembro")
+  ReuniaoPublicaParteSuplente ReuniaoPublica[] @relation("ParteSuplente")
+
+  SentinelaParteMembro   Sentinela[] @relation("ParteMembro")
+  SentinelaParteSuplente Sentinela[] @relation("ParteSuplente")
+
+  IndicadoresParteMembro   Indicadores[] @relation("ParteMembro")
+  IndicadoresParteSuplente Indicadores[] @relation("ParteSuplente")
+
+  @@index([nome])
+  @@map("membro")
+}
+
+enum TESOUROS {
+  discurso
+  perolas
+  leitura
+}
+
+model HierarquiaMembro {
+  id         String  @id @default(uuid())
+  membroId   String  @unique
+  superiorId String?
+
+  membro   Membro  @relation("HierarquiaMembro", fields: [membroId], references: [id], onDelete: Cascade)
+  superior Membro? @relation("MembroSuperior", fields: [superiorId], references: [id], onDelete: SetNull)
+
+  @@map("hierarquia_membro")
+}
+
+model ServicoMembro {
+  id       String      @id @default(uuid())
+  membroId String
+  servico  ServicoEnum // Agora é um enum, não uma tabela separada
+  posicao  PosicaoEnum // Enum que criamos antes
+
+  membro Membro @relation(fields: [membroId], references: [id], onDelete: Cascade)
+
+  @@unique([membroId, servico]) // Garante que um membro não tenha o mesmo serviço repetido
+}
+
+// Grupo
+model Grupo {
+  id        String  @id @default(uuid())
+  nome      String  @unique
+  descricao String?
+
+  // Um grupo tem um dirigente e um ajudante (ambos são membros)
+  dirigenteId String? @unique
+  ajudanteId  String? @unique
+
+  dirigente Membro? @relation("DirigenteGrupo", fields: [dirigenteId], references: [id], onDelete: SetNull)
+  ajudante  Membro? @relation("AjudanteGrupo", fields: [ajudanteId], references: [id], onDelete: SetNull)
+
+  // Relação com membros (um grupo pode ter vários membros)
+  membros Membro[]
+
+  //Reunião
+
+  Arrumacao Arrumacao[]
+
+  @@index([nome])
+  @@map("grupo")
+}
+
+model Students {
+  id                String    @id @default(uuid())
+  name              String?
+  date              DateTime?
+  bookId            String?
+  membroId          String
+  membroReferenteId String?   @unique // A chave estrangeira precisa ser única!
+
+  // Relacionamento com Livro de Estudo
+  bookStudying BookStudying? @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  // Relacionamento com Membro (Cada estudante pertence a um membro)
+  membro Membro @relation(name: "MembroEstudantes", fields: [membroId], references: [id], onDelete: Cascade)
+
+  // Se o estudante for um membro, referenciamos o próprio Membro (Relacionamento 1:1)
+  membroReferente Membro? @relation(name: "EstudanteComoMembro", fields: [membroReferenteId], references: [id])
+
+  tasks Tasks[]
+}
+
+model Tasks {
+  id          String  @id @default(uuid())
+  name        String?
+  isCorrected Boolean @default(false)
+
+  // Uma tarefa pertence a um estudante e é atribuída por um membro
+  studentId String
+  membroId  String
+
+  student Students @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  membro  Membro   @relation(fields: [membroId], references: [id], onDelete: Cascade)
+}
+
+model BookStudying {
+  id     String  @id @default(uuid())
+  name   String
+  lesson String?
+  point  String?
+
+  students Students[]
+}
+
+// Reunião________________________________________________________________________________________
+model Ano {
+  id        String  @id @default(uuid())
+  ano       Int     @unique()
+  descricao String?
+  meses     Meses[] // Relação com os meses
+}
+
+model Meses {
+  id        String  @id @default(uuid())
+  mes       Int
+  descricao String?
+  anoId     String // Agora obrigatório
+  ano       Ano     @relation(fields: [anoId], references: [id], onDelete: Cascade)
+
+  ReunioesDates ReunioesDates[]
+}
+
+model ReunioesDates {
+  id    String   @id @default(uuid())
+  from  DateTime @default(now())
+  to    DateTime @default(now())
+  mesId String
+  mes   Meses    @relation(fields: [mesId], references: [id], onDelete: Cascade)
+
+  PartesInicias PartesInicias[]
+  Tesouros      Tesouros[]
+  Ministerio    Ministerio[]
+
+  Cristao Cristao[]
+
+  PartesFinais PartesFinais[]
+
+  ReuniaoPublica ReuniaoPublica[]
+
+  Sentinela Sentinela[]
+
+  Indicadores Indicadores[]
+
+  Arrumacao Arrumacao[]
+
+  Assistencia Assistencia[]
+}
+
+//Reunião fim de semana
+model PartesInicias {
+  id               String         @id @default(uuid())
+  name             String         @default("presidente")
+  memberId         String?
+  suplenteMemberId String?
+  ReunioesDatesId  String
+  ReunioesDates    ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+  membro           Membro?        @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro   Membro?        @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+
+  @@unique([name, ReunioesDatesId]) // 🔹 Garante unicidade de `name` dentro do mesmo `ReunioesDatesId`
+}
+
+model Tesouros {
+  id               String         @id @default(uuid())
+  name             TESOUROS       @default(discurso)
+  memberId         String?
+  suplenteMemberId String?
+  ReunioesDatesId  String
+  membro           Membro?        @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro   Membro?        @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+  ReunioesDates    ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+
+  //Livros de conselho
+  nameLivro String?
+  lesson    String?
+  Created   DateTime @default(now())
+  Updated   DateTime @updatedAt
+
+  @@unique([name, ReunioesDatesId]) // 🔹 Garante unicidade de `name` dentro do mesmo `ReunioesDatesId`
+}
+
+model Ministerio {
+  id                        String         @id @default(uuid())
+  name                      MinisterioEnum @default(iniciarConversa1)
+  memberDirigenteId         String
+  memberMoradorId           String?
+  memberDirigenteSuplenteId String?
+  memberMoradorSuplenteId   String?
+
+  reunioesDatesId String
+  tema            String?
+   nameLivro String?
+  lessonPoint    String?
+  Created   DateTime @default(now())
+  Updated   DateTime @updatedAt
+
+  membroDirigente         Membro?        @relation("membroDirigente", fields: [memberDirigenteId], references: [id])
+  membroMorador           Membro?        @relation("membroMorador", fields: [memberMoradorId], references: [id])
+  suplenteMembroDirigente Membro?        @relation("suplenteMembroDirigente", fields: [memberDirigenteSuplenteId], references: [id])
+  suplenteMembroMorador   Membro?        @relation("suplenteMembroMorador", fields: [memberMoradorSuplenteId], references: [id])
+  reunioesDates           ReunioesDates? @relation(fields: [reunioesDatesId], references: [id])
+}
+
+model Cristao {
+  id                          String         @id @default(uuid())
+  name                        CristaoEnum    @default(parte1)
+  ReunioesDatesId             String
+  tema                        String?
+  memberId                    String?
+  suplenteMemberId            String?
+  leitorId                    String?
+  leitorSuplenteId            String?
+  LeitorEstudoBiblico         Membro?        @relation("ParteLeitorMembro", fields: [leitorId], references: [id])
+  LeitorSuplenteEstudoBiblico Membro?        @relation("ParteLeitorMembroSuplente", fields: [leitorSuplenteId], references: [id])
+  membro                      Membro?        @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro              Membro?        @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+  ReunioesDates               ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+
+  @@unique([name, ReunioesDatesId]) // 🔹 Garante unicidade de `name` dentro do mesmo `ReunioesDatesId`
+}
+
+model PartesFinais {
+  id               String         @id @default(uuid())
+  name             String         @default("Presidente & oração inicial")
+  memberId         String?
+  suplenteMemberId String?
+  ReunioesDatesId  String
+  membro           Membro?        @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro   Membro?        @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+  ReunioesDates    ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+}
+
+//Reunião meio de semana
+model ReuniaoPublica {
+  id               String             @id @default(uuid())
+  name             ReuniaoPublicaEnum @default(presidente)
+  memberId         String?
+  suplenteMemberId String?
+  tema             String?
+  ReunioesDatesId  String
+  membro           Membro?            @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro   Membro?            @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+  ReunioesDates    ReunioesDates?     @relation(fields: [ReunioesDatesId], references: [id])
+
+  @@unique([ReunioesDatesId, name])
+}
+
+model Sentinela {
+  id               String        @id @default(uuid())
+  name             SentinelaEnum @default(dirigente)
+  memberId         String?
+  tema             String?
+  suplenteMemberId String?
+  leitorId         String?
+  leitorSuplenteId String?
+  ReunioesDatesId  String
+
+  membro         Membro? @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro Membro? @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+
+  ReunioesDates ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+
+  @@unique([ReunioesDatesId, name])
+}
+
+//Papel nas reuniões designações
+model Indicadores {
+  id               String         @id @default(uuid())
+  name             String
+  memberId         String?
+  suplenteMemberId String?
+  ReunioesDatesId  String
+  membro           Membro?        @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro   Membro?        @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+  ReunioesDates    ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+}
+
+model Arrumacao {
+  id              String         @id @default(uuid())
+  name            String
+  grupoId         String?
+  ReunioesDatesId String
+  Grupo           Grupo?         @relation(fields: [grupoId], references: [id])
+  ReunioesDates   ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+}
+
+model Assistencia {
+  id              String         @id @default(uuid())
+  name            String
+  quantidade      Int
+  ReunioesDatesId String
+  ReunioesDates   ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+}
+
+//__________________________________________________________________
+model HourLog {
+  id        String   @id @default(cuid())
+  day       DateTime
+  total     Int      // total de horas acumuladas
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

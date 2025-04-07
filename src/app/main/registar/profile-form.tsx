@@ -1,708 +1,1005 @@
-"use client"
+/* eslint-disable @typescript-eslint/no-unused-vars */
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useFieldArray, useForm } from "react-hook-form"
-import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useFieldArray, useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { AxiosError } from "axios";
+import { CalendarIcon, LoaderCircle, PlusCircle, X } from "lucide-react";
 
-import { cn } from "@/lib/utils"
-import { toast } from "@/hooks/use-toast"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { CalendarIcon, PlusCircle, X } from "lucide-react"
-// import { CalendarDateRangePicker } from "../(dashboard)/components/date-range-picker"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { Label } from "recharts"
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const profileFormSchema = z.object({
-  username: z
-    .string({required_error:"O nome é obrigatório"})
-    .min(5, {
-      message: "Nome tem de ser pelo menos 5 carcteres",
-    }),
+import { api, useMembroFormData } from "@/hooks/use-membro-form-data";
+import {
+  profileFormSchema,
+  type ProfileFormValues,
+} from "@/types/schema-register-member";
+import {
+  CarreiraEnum,
+  DadivaEnum,
+  EstadoEnum,
+  PosicaoEnum,
+  ServicoEnum,
+  SexoEnum,
+} from "@/const/type-members";
 
-  status: z
-    .string({
-      message: "A definicão do estado é obrigatório",
-    }),
-
-  role: z
-    .string({
-      message: "A definicão da função é obrigatório",
-    }),
-
-  careers: z
-    .string({
-      message: "A definicão da carreira é obrigatório",
-    }),
-
-  contact: z.
-    array(z.
-      object(
-        {
-          value:
-            z.string({
-              message: "Número é obrigatório.",
-            })
-        }
-      )),
-
-  addicionalInfo: z.string().max(160).min(4),
-
-
-  dob: z.date({
-    message: "A definicão da data de nascimento é obrigatório",
-  }).optional(),
-
-  service: z
-    .array(
-      z.object({
-        value: z.enum(["conta", "manutencao", "literatura", "territorio", "somEaudio"]),
-        position: z.enum(["servo", "Ajudante"])
-      })
-    ).max(5, { message: "erro" }),
-
-  regular: z.date({
-    message: "A definicão da data da carreira é obrigatório.",
-  }).optional(),
-
-  school: z.date({
-    message: "A definicão da data é obrigatório.",
-  }).optional(),
-
-  helper: z.date({
-    message: "A definicão da data da carreira é obrigatório.",
-  }).optional(),
-
-  teacher: z.date({
-    message: "A definicão da data da carreira é obrigatório.",
-  }).optional(),
-
-  Baptized: z.date({
-    message: "A definicão da data do baptismo é obrigatório.",
-  }).optional(),
-})
-
-type ProfileFormValues = z.infer<typeof profileFormSchema>
-
-// This can come from your database or API.
+// Valores padrão para o formulário
 const defaultValues: Partial<ProfileFormValues> = {
-  addicionalInfo: "O irmão é ....",
-  service: [
-    {
-      value: "somEaudio",
-      position: "servo"
-
-    },
-    {
-      value: "conta",
-      position: "Ajudante"
-
-    },
-  ],
-  contact: [
-    { value: "+244" }
-  ]
-}
+  contacto: "+244",
+  addicionalInfo: "",
+  servicos: [],
+};
 
 export function ProfileForm() {
-
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues,
     mode: "onChange",
-  })
+  });
 
-  // const { formState: { isValid } } = form
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    setValue,
+    formState: { isSubmitting, errors },
+  } = form;
 
   const { fields, append, remove } = useFieldArray({
-    name: "service",
-    control: form.control,
-  })
+    name: "servicos",
+    control,
+  });
 
-  const { ["fields"]: fieldsContact, ["append"]: appendContact, ["remove"]: removeContact } = useFieldArray({
-    name: "contact",
-    control: form.control,
-  })
+  const { grupos, isLoading, error: dataError } = useMembroFormData();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("info-pessoal");
 
-  function onSubmit(data: ProfileFormValues) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    })
+  const watchEstado = watch("estado");
+  const watchCarreira = watch("carreira");
+  const watchGrupoId = watch("grupoId");
+
+  // Efeito para limpar campos não relevantes quando o estado muda
+  useEffect(() => {
+    if (watchEstado !== "BATIZADO") {
+      setValue("carreira", undefined);
+      setValue("dadivas", undefined);
+      setValue("baptismo", undefined);
+      setValue("dataPioneiroRegular", undefined);
+      setValue("dataPioneiroAuxiliar", undefined);
+      setValue("servicos", []);
+      setValue("funcaoGrupo", undefined);
+    }
+    if (watchEstado === "MATRICULADO") {
+      setValue("dataPublicador", undefined);
+      setValue("grupoId", undefined);
+      setValue("isDirigente", false);
+      setValue("isAjudante", false);
+    }
+
+    if (watchCarreira === "PIONEIRO_AUXILIAR") {
+      setValue("dataPioneiroRegular", undefined);
+    }
+    if (watchCarreira === "PIONEIRO_REGULAR") {
+      setValue("dataPioneiroAuxiliar", undefined);
+    }
+  }, [watchEstado, watchCarreira, setValue]);
+
+  // Função para lidar com o envio do formulário
+  async function onSubmit(values: ProfileFormValues) {
+    try {
+      setSubmitError(null);
+
+      // Preparar dados para envio
+      const formData = {
+        nome: values.nome,
+        email: values.email,
+        contacto: values.contacto,
+        dataNascimento: values.nascimento,
+        estado: values.estado,
+        descricao: values.addicionalInfo,
+        sexo: values.sexo,
+        ...(values.estado === "BATIZADO" && {
+          dataBaptismo: values.baptismo,
+          carreira: values.carreira,
+          dadiva: values.dadivas,
+          ...(values.carreira != "PIONEIRO_REGULAR"
+            ? { dataAuxiliar: values.dataPioneiroAuxiliar }
+            : { dataRegular: values.dataPioneiroRegular }),
+          isDirigente: values.isDirigente,
+          isAjudante: values.isAjudante,
+          servicos: values.servicos,
+        }),
+        ...((values.estado === "MATRICULADO" ||
+          values.estado === "BATIZADO" ||
+          values.estado === "ASSOCIADO") && {
+          dataMatricula: values.dataMatricula,
+        }),
+        ...((values.estado === "ASSOCIADO" || values.estado === "BATIZADO") && {
+          dataPublicador: values.dataPublicador,
+          grupoId: values.grupoId,
+        }),
+      };
+
+      await api.post("member2", formData);
+
+      toast({
+        title: "Membro registrado com sucesso",
+        description: "O novo membro foi adicionado ao sistema.",
+        variant: "default",
+      });
+
+      reset(defaultValues);
+      setActiveTab("info-pessoal");
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const errorMessage =
+          error.response?.data?.error || "Erro ao registrar o membro";
+        setSubmitError(errorMessage);
+
+        toast({
+          title: "Erro ao registrar o membro",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro inesperado",
+          description:
+            "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+          variant: "destructive",
+        });
+      }
+    }
   }
 
+  // Atualizar isDirigente e isAjudante quando funcaoGrupo mudar
+  const handleFuncaoGrupoChange = (value: string) => {
+    setValue("funcaoGrupo", value as "dirigente" | "ajudante");
+    setValue("isDirigente", value === "dirigente");
+    setValue("isAjudante", value === "ajudante");
+  };
+
+  if (isLoading)
+    return (
+      <div className="flex justify-center p-8">
+        <LoaderCircle className="animate-spin h-8 w-8" />
+      </div>
+    );
+  if (dataError)
+    return (
+      <div className="p-4 text-red-500">
+        Erro ao carregar dados: {dataError.message}
+      </div>
+    );
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        {/* member */}
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome do membro</FormLabel>
-              <FormControl>
-                <Input placeholder="Digite o nome do membro" {...field} />
-              </FormControl>
-              <FormDescription>
-                Este é o nome do membro.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        {/* dates  */}
-        <div className="grid grid-cols-2 gap-6">
-          <FormField
-            control={form.control}
-            name="school"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de nascimento</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Selecione a data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
+    <Card className="w-full max-w-4xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-2xl">Registrar Novo Membro</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+                {submitError}
+              </div>
+            )}
+
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-8">
+                <TabsTrigger value="info-pessoal">
+                  Informações Pessoais
+                </TabsTrigger>
+                <TabsTrigger value="estado-progresso">
+                  Estado e Progresso
+                </TabsTrigger>
+                {watchEstado === "BATIZADO" && (
+                  <>
+                    <TabsTrigger value="carreira-funcoes">
+                      Carreira e Funções
+                    </TabsTrigger>
+                    <TabsTrigger value="servicos">Serviços</TabsTrigger>
+                  </>
+                )}
+              </TabsList>
+
+              <TabsContent value="info-pessoal" className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Informações Pessoais</h3>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                      control={control}
+                      name="nome"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nome do membro</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="Digite o nome completo"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Aqui deve-se adicionar data que foi matriculado na escola
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="dob"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de Baptismo</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Selecione a data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
+                    <FormField
+                      control={control}
+                      name="sexo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sexo</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o sexo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {SexoEnum.map((sexo) => (
+                                <SelectItem key={sexo.value} value={sexo.value}>
+                                  {sexo.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  A sua data de nascimento.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  </div>
 
-
-          <FormField
-            control={form.control}
-            name="teacher"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de Publicador</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Selecione a data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                      control={control}
+                      name="contacto"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contacto</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+244 000 000 000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Aqui deve-se adiconar a data de quando tornou-se publicador.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
-          <FormField
-            control={form.control}
-            name="Baptized"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de Matricula</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Selecione a data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
+                    <FormField
+                      control={control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="exemplo@email.com"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Aqui deve-se adiconar a data do seu Baptismo.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  </div>
 
-          <FormField
-            control={form.control}
-            name="helper"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de Pioneiro Auxiliar</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Selecione a data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Aqui deve-se adiconar a data do início da carreira como pioneiro auxiliar.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="regular"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Data de Pioneiro regular</FormLabel>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <FormControl>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Selecione a data</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </FormControl>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  Aqui deve-se adiconar a data do início da carreira como pioneiro regular.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+                  <FormField
+                    control={control}
+                    name="nascimento"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data de Nascimento</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  <span className="block truncate">
+                                    {format(field.value, "dd/MM/yyyy")}
+                                  </span>
+                                ) : (
+                                  <span>Selecione a data</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() ||
+                                date < new Date("1900-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-        <div className="grid grid-cols-2 gap-6">
-          {/* status  */}
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o estado" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="M">Matriculado</SelectItem>
-                    <SelectItem value="A">Associado</SelectItem>
-                    <SelectItem value="B">Baptizado</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Seleciona o estado de progresso do membro
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormField
+                    control={control}
+                    name="addicionalInfo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Informações Adicionais</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Informações adicionais sobre o membro"
+                            className="min-h-[100px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-          {/* Carreira  */}
-          <FormField
-            control={form.control}
-            name="careers"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Carreira</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="selecione um a carreira" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="M">Pioneiro Auxiliar</SelectItem>
-                    <SelectItem value="A">Pioneiro Regular</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Adicione-o caso pertence numas das respectivas carreira
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <div className="pt-4 flex flex-col sm:flex-row justify-between gap-2">
+                    <Button
+                      type="button"
+                      onClick={() => setActiveTab("estado-progresso")}
+                      className="w-full sm:w-auto"
+                    >
+                      Próximo
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
 
-          {/* Função */}
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Dádivas em homem</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="selecione uma função" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="M">Ancião</SelectItem>
-                    <SelectItem value="A">Servo ministerial</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Adicione-o caso pertence numas das respectivas funções
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+              <TabsContent value="estado-progresso" className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Estado e Progresso</h3>
 
-        <FormField
-          control={form.control}
-          name="addicionalInfo"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ponto Adicional</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Informações adicionais"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Informações adicionais
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div>
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-3 items-center">
-              <Label >Adiciione os departamento a que pertence</Label>
-              <FormField
-                control={form.control}
-                key={field.id}
-                name={`service.${index}.value`}
-                render={({ field }) => (
-                  <div className="flex items-center gap-2">
-                    <FormItem >
-                      <FormLabel className={cn("sr-only")}>
-                        URLs
-                      </FormLabel>
-                      <FormDescription className={cn("sr-only")}>
-                        Add links to your website, blog, or social media profiles.
-                      </FormDescription>
-                      <div className="flex items-center gap-2">
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormField
+                    control={control}
+                    name="estado"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estado</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select a verified email to display" />
+                              <SelectValue placeholder="Selecione o estado" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="conta">Contas</SelectItem>
-                            <SelectItem value="territorio">Audio</SelectItem>
-                            <SelectItem value="somEaudio">Literatura</SelectItem>
-                            <SelectItem value="literatura">Literatura</SelectItem>
-                            <SelectItem value="manutencao">Manutencão</SelectItem>
+                            {EstadoEnum.map((estado) => (
+                              <SelectItem
+                                key={estado.value}
+                                value={estado.value}
+                              >
+                                {estado.name}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className={""}
-                          onClick={() => remove(index)}
-                        >
-                          <X className="stroke-red-500" />
-                        </Button>
-                      </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                      <FormMessage />
-                    </FormItem>
+                  {watchEstado === "BATIZADO" && (
+                    <FormField
+                      control={control}
+                      name="baptismo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Baptismo</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    <span className="block truncate">
+                                      {format(field.value, "dd/MM/yyyy")}
+                                    </span>
+                                  ) : (
+                                    <span>Selecione a data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() ||
+                                  date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
-                  </div>
-                )}
-              />
-              <FormField
-                control={form.control}
-                key={field.id}
-                name={`service.${index}.position`}
-                render={({ field }) => (
-                  <div className="flex items-center gap-2">
-                    <FormItem >
-                      <FormLabel className={cn("sr-only")}>
-                        URLs
-                      </FormLabel>
-                      <FormDescription className={cn("sr-only")}>
-                        Add links to your website, blog, or social media profiles.
-                      </FormDescription>
-                      <div className="flex items-center gap-2">
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a verified email to display" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="servo">Servo</SelectItem>
-                            <SelectItem value="Ajudante">Ajudante</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className={""}
-                          onClick={() => remove(index)}
-                        >
-                          <X className="stroke-red-500" />
-                        </Button>
-                      </div>
+                  {(watchEstado === "MATRICULADO" ||
+                    watchEstado === "BATIZADO" ||
+                    watchEstado === "ASSOCIADO") && (
+                    <FormField
+                      control={control}
+                      name="dataMatricula"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Data de Matrícula</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    "w-full pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                  )}
+                                >
+                                  {field.value ? (
+                                    <span className="block truncate">
+                                      {format(field.value, "dd/MM/yyyy")}
+                                    </span>
+                                  ) : (
+                                    <span>Selecione a data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-auto p-0"
+                              align="start"
+                            >
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() ||
+                                  date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
 
-                      <FormMessage />
-                    </FormItem>
+                  {(watchEstado === "ASSOCIADO" ||
+                    watchEstado === "BATIZADO") && (
+                    <>
+                      <FormField
+                        control={control}
+                        name="dataPublicador"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Data de Publicador</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
+                                    )}
+                                  >
+                                    {field.value ? (
+                                      <span className="block truncate">
+                                        {format(field.value, "dd/MM/yyyy")}
+                                      </span>
+                                    ) : (
+                                      <span>Selecione a data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  disabled={(date) =>
+                                    date > new Date() ||
+                                    date < new Date("1900-01-01")
+                                  }
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                        <FormField
+                        control={control}
+                        name="grupoId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Grupo</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o grupo" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {grupos.map((grupo) => (
+                                  <SelectItem key={grupo.id} value={grupo.id}>
+                                    {grupo.nome}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                  </div>
-                )}
-              />
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => append({ value: "conta", position: "Ajudante" })}
-          >
-            <PlusCircle className="stroke-blue-400" />Adicionar Privilégio de serviço
-          </Button>
-        </div>
-        <div>
-          {fieldsContact.map((field, index) => (
-            <div key={field.id} className="flex gap-3 items-center">
-              <Label >Adicionar números, email, etc</Label>
+                    </>
+                  )}
 
-              <FormField
-                control={form.control}
-                key={field.id}
-                name={`contact.${index}.value`}
-                render={({ field }) => (
-                  <div className="flex items-center gap-2">
-                    <FormItem >
-                      <FormLabel className={cn("sr-only")}>
-                        URLs
-                      </FormLabel>
-                      <FormDescription className={cn("sr-only")}>
-                        Add links to your website, blog, or social media profiles.
-                      </FormDescription>
-
-                      <FormControl>
-                        <Input placeholder="Digite o número do membro" {...field} />
-                      </FormControl>
-
-                      <FormMessage />
-                    </FormItem>
+                  <div className="pt-4 flex flex-col sm:flex-row justify-between gap-2">
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      className={"h-full"}
-                      onClick={() => removeContact(index)}
+                      onClick={() => setActiveTab("info-pessoal")}
+                      className="w-full sm:w-auto"
                     >
-                      <X className="stroke-red-500" />
+                      Anterior
                     </Button>
-
+                    {watchEstado === "BATIZADO" && (
+                      <Button
+                        type="button"
+                        onClick={() => setActiveTab("carreira-funcoes")}
+                        className="w-full sm:w-auto"
+                      >
+                        Próximo
+                      </Button>
+                    )}
                   </div>
+                </div>
+              </TabsContent>
+
+              {watchEstado === "BATIZADO" && (
+                <>
+                  <TabsContent value="carreira-funcoes" className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">
+                        Carreira e Funções
+                      </h3>
+
+                      <FormField
+                        control={control}
+                        name="carreira"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Carreira</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione a carreira" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {CarreiraEnum.map((carreira) => (
+                                  <SelectItem
+                                    key={carreira.value}
+                                    value={carreira.value}
+                                  >
+                                    {carreira.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {watchCarreira === "PIONEIRO_REGULAR" && (
+                        <FormField
+                          control={control}
+                          name="dataPioneiroRegular"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Data de Pioneiro Regular</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        <span className="block truncate">
+                                          {format(field.value, "dd/MM/yyyy")}
+                                        </span>
+                                      ) : (
+                                        <span>Selecione a data</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto p-0"
+                                  align="start"
+                                >
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                      date > new Date() ||
+                                      date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {watchCarreira === "PIONEIRO_AUXILIAR" && (
+                        <FormField
+                          control={control}
+                          name="dataPioneiroAuxiliar"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Data de Pioneiro Auxiliar</FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                      )}
+                                    >
+                                      {field.value ? (
+                                        <span className="block truncate">
+                                          {format(field.value, "dd/MM/yyyy")}
+                                        </span>
+                                      ) : (
+                                        <span>Selecione a data</span>
+                                      )}
+                                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent
+                                  className="w-auto p-0"
+                                  align="start"
+                                >
+                                  <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                      date > new Date() ||
+                                      date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      <FormField
+                        control={control}
+                        name="dadivas"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Dádivas</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione a dádiva" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {DadivaEnum.map((dadiva) => (
+                                  <SelectItem
+                                    key={dadiva.value}
+                                    value={dadiva.value}
+                                  >
+                                    {dadiva.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {watchGrupoId && (
+                        <FormField
+                          control={control}
+                          name="funcaoGrupo"
+                          render={({ field }) => (
+                            <FormItem className="space-y-3">
+                              <FormLabel>Função no Grupo</FormLabel>
+                              <FormControl>
+                                <RadioGroup
+                                  onValueChange={handleFuncaoGrupoChange}
+                                  defaultValue={field.value}
+                                  className="flex flex-col space-y-1"
+                                >
+                                  <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <RadioGroupItem value="dirigente" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      Dirigente
+                                    </FormLabel>
+                                  </FormItem>
+                                  <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <RadioGroupItem value="ajudante" />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">
+                                      Ajudante
+                                    </FormLabel>
+                                  </FormItem>
+                                </RadioGroup>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      <div className="pt-4 flex flex-col sm:flex-row justify-between gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setActiveTab("estado-progresso")}
+                          className="w-full sm:w-auto"
+                        >
+                          Anterior
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setActiveTab("servicos")}
+                          className="w-full sm:w-auto"
+                        >
+                          Próximo
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="servicos" className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Serviços</h3>
+
+                      {fields.length > 0 && (
+                        <div className="space-y-4">
+                          {fields.map((field, index) => (
+                            <div
+                              key={field.id}
+                              className="flex flex-col sm:flex-row items-start sm:items-center gap-4"
+                            >
+                              <FormField
+                                control={control}
+                                name={`servicos.${index}.servico`}
+                                render={({ field }) => (
+                                  <FormItem className="flex-1 w-full sm:w-auto">
+                                    <FormLabel
+                                      className={cn(index !== 0 && "sr-only")}
+                                    >
+                                      Serviço
+                                    </FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione o serviço" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {ServicoEnum.map((servico) => (
+                                          <SelectItem
+                                            key={servico.value}
+                                            value={servico.value}
+                                          >
+                                            {servico.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={control}
+                                name={`servicos.${index}.posicao`}
+                                render={({ field }) => (
+                                  <FormItem className="flex-1 w-full sm:w-auto">
+                                    <FormLabel
+                                      className={cn(index !== 0 && "sr-only")}
+                                    >
+                                      Posição
+                                    </FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Selecione a posição" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {PosicaoEnum.map((posicao) => (
+                                          <SelectItem
+                                            key={posicao.value}
+                                            value={posicao.value}
+                                          >
+                                            {posicao.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="mt-2 sm:mt-8"
+                                onClick={() => remove(index)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 w-full sm:w-auto"
+                        onClick={() =>
+                          append({ servico: "TERRITORIO", posicao: "AJUDANTE" })
+                        }
+                      >
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Adicionar Serviço
+                      </Button>
+
+                      <div className="pt-8 flex flex-col sm:flex-row justify-between gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setActiveTab("carreira-funcoes")}
+                          className="w-full sm:w-auto"
+                        >
+                          Anterior
+                        </Button>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
+
+            {/* Adicione o botão de submissão fora das abas */}
+            <div className="pt-8 flex flex-col sm:flex-row justify-end gap-2">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full sm:w-auto"
+              >
+                {isSubmitting && (
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
                 )}
-              />
+                Registrar Membro
+              </Button>
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => appendContact({ value: "+244", })}
-          >
-            <PlusCircle className="stroke-blue-400" />Adicionar números
-          </Button>
-        </div>
-        <Button type="submit">Adicionar membro</Button>
-      </form>
-    </Form>
-  )
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
 }

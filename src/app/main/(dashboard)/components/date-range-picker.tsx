@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { addDays, format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import { ptBR } from "date-fns/locale"
+import { CalendarIcon } from 'lucide-react'
 import { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
@@ -14,16 +15,35 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+export interface CalendarDateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
+  date?: DateRange | undefined;
+  setDate?: (date: DateRange | undefined) => void;
+}
+
 export function CalendarDateRangePicker({
   className,
-}: React.HTMLAttributes<HTMLDivElement>) {
-  const [date, setDate] = React.useState<DateRange | undefined>({
+  date: externalDate,
+  setDate: externalSetDate,
+  ...props
+}: CalendarDateRangePickerProps) {
+  // Use internal state if no external state is provided
+  const [internalDate, setInternalDate] = React.useState<DateRange | undefined>({
     from: new Date(2025, 0, 20),
     to: addDays(new Date(2025, 0, 20), 20),
   })
+  
+  // Use either external or internal state
+  const date = externalDate !== undefined ? externalDate : internalDate
+  const setDate = (newDate: DateRange | undefined) => {
+    if (externalSetDate) {
+      externalSetDate(newDate)
+    } else {
+      setInternalDate(newDate)
+    }
+  }
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className={cn("grid gap-2", className)} {...props}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -38,11 +58,11 @@ export function CalendarDateRangePicker({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {format(date.from, "dd/MM/yyyy", { locale: ptBR })} -{" "}
+                  {format(date.to, "dd/MM/yyyy", { locale: ptBR })}
                 </>
               ) : (
-                format(date.from, "LLL dd, y")
+                format(date.from, "dd/MM/yyyy", { locale: ptBR })
               )
             ) : (
               <span>Selecione a semana</span>
@@ -57,6 +77,7 @@ export function CalendarDateRangePicker({
             selected={date}
             onSelect={setDate}
             numberOfMonths={2}
+            locale={ptBR}
           />
         </PopoverContent>
       </Popover>

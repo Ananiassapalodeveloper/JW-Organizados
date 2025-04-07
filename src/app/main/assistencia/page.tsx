@@ -9,7 +9,7 @@ import {
 import { Diferences } from "@/components/charts/diferences";
 import { Component } from "@/components/charts/Assistences"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { changeColorStatus } from "../atribuir/page";
+import {  } from "../atribuir/page";
 import { Circle, CircleCheckIcon, LampDeskIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -106,6 +106,7 @@ const AllDesignations = [
     icon: Circle,
   },
 ];
+
 export default function AssistenciaPage() {
   return (
     <Tabs defaultValue="overview" className="space-y-4" orientation="vertical">
@@ -149,7 +150,7 @@ export default function AssistenciaPage() {
                 <CardTitle className="text-sm font-medium">
                   {data.completed}
                 </CardTitle>
-                <data.icon className={changeColorStatus(data.status)} />
+                {/* <data.icon className={changeColorStatus(data.status)} /> */}
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{data.month}</div>
