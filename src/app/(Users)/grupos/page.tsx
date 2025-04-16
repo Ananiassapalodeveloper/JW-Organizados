@@ -2,7 +2,6 @@
 import { Metadata } from "next";
 import { columns } from "./components/columns";
 import { DataTable } from "./components/data-table";
-import { UserNav } from "./components/user-nav";
 import { Members } from "./data/data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -48,9 +47,7 @@ export default async function CongregationsMembers() {
                   Eis as listas do grupo nº 1
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
-                <UserNav />
-              </div>
+           
             </div>
             <DataTable
               data={Members.filter((member) => member.group === 1)}
@@ -78,9 +75,7 @@ export default async function CongregationsMembers() {
                   Eis as listas do grupo nº 2
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
-                <UserNav />
-              </div>
+           
             </div>
             <DataTable
               data={Members.filter((member) => member.group === 1)}
@@ -117,9 +112,7 @@ export default async function CongregationsMembers() {
                   Eis as listas do grupo nº 3
                 </p>
               </div>
-              <div className="flex items-center space-x-2">
-                <UserNav />
-              </div>
+           
             </div>
             <DataTable
               data={Members.filter((member) => member.group === 3)}

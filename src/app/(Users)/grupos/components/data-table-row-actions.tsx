@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-import { posicoes} from "../data/data"
+import { estados} from "../data/data"
 import { memberSchema} from "../data/schema"
 
 interface DataTableRowActionsProps<TData> {
@@ -49,8 +49,8 @@ export function DataTableRowActions<TData>({
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>Labels</DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuRadioGroup value={member?.posicoes}>
-              {posicoes.map((label) => (
+            <DropdownMenuRadioGroup value={member?.estado}>
+              {estados.map((label) => (
                 <DropdownMenuRadioItem key={label.value} value={label.value}>
                   {label.label}
                 </DropdownMenuRadioItem>

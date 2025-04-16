@@ -19,11 +19,12 @@ export async function POST(request: Request) {
     const existingRecord = await prisma.partesFinais.findMany({
       where: { ReunioesDatesId: dados.ReunioesDatesId },
     });
-    if (existingRecord.length === 4) {
+
+    if (existingRecord.length >= 1) {
       return NextResponse.json(
         {
           error:
-            "O registro Para esta semana já está preenchido, não é possível criar outro.",
+            "A parte final dessa semana já se encontra preenchido",
         },
         { status: 400 }
       );

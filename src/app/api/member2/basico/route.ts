@@ -4,9 +4,23 @@ import { NextResponse } from "next/server"
 export async function GET() {
   try {
     const membros = await prisma.membro.findMany({
-      select: {
-        id: true,
-        nome: true,
+      include:{
+        grupo:{
+          select: {
+            nome:true,
+            dirigente:{
+              select:{
+                nome:true
+              }
+            },
+            ajudante:{
+              select:{
+                nome:true
+              }
+            }
+          }
+        },
+        servicos:true
       },
       orderBy: {
         nome: "asc",

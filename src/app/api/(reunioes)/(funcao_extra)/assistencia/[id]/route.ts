@@ -1,45 +1,83 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Buscar arrumacaos por ID
-export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const { id } = params;
-  const arrumacaos = await prisma.arrumacao.findUnique({
-    where: { id }
-    // include: { arrumacao: true, carreira: true, servicos: { include: { servico: true, posicao: true } } }
+// Buscar assistencia por ID
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id: ReunioesDatesId } = params;
+
+  if (!ReunioesDatesId) {
+    return NextResponse.json({ error: "ID é obrigatório" }, { status: 404 });
+  }
+
+  const assistencia = await prisma.assistencia.findMany({
+    where: {
+      ReunioesDatesId,
+    },
+    include: {
+      ReunioesDates: {
+        select: {
+          from: true,
+          to: true,
+        },
+      },
+      
+    },
   });
 
-  if (!arrumacaos) return NextResponse.json({ error: "arrumacaos não encontrado" }, { status: 404 });
+  if (!assistencia)
+    return NextResponse.json(
+      { error: "assistencia não encontrado" },
+      { status: 404 }
+    );
 
-  return NextResponse.json(arrumacaos);
+  return NextResponse.json(assistencia);
 }
 
-// Atualizar arrumacaos
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// Atualizar assistencia
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const { id } = params;
     const body = await req.json();
 
-    const arrumacaos = await prisma.arrumacao.update({ where: { id }, data: body });
+    const assistencia = await prisma.assistencia.update({
+      where: { id },
+      data: body,
+    });
 
-    return NextResponse.json({ message: "arrumacaos atualizado com sucesso!", arrumacaos });
+    return NextResponse.json({
+      message: "assistencia atualizado com sucesso!",
+      assistencia,
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Erro ao atualizar arrumacaos" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erro ao atualizar.assistencia" },
+      { status: 500 }
+    );
   }
 }
-
-// Excluir arrumacaos (eliminação em cascata)
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+// Excluir assistencia (eliminação em cascata)
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const { id } = params;
-    
 
-    // Exclui o arrumacaos
-    await prisma.arrumacao.delete({ where: { id } });
+    // Exclui o assistencia
+    await prisma.assistencia.delete({ where: { id } });
 
-    return NextResponse.json({ message: "arrumacaos excluído com sucesso!" });
+    return NextResponse.json({ message: "assistencia excluído com sucesso!" });
   } catch (error) {
-    return NextResponse.json({ error: "Erro ao excluir arrumacaos" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Erro ao excluir assistencia" },
+      { status: 500 }
+    );
   }
 }

@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { DialogClose } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { CalendarDateRangePicker } from "@/app/main/(dashboard)/components/date-range-picker"
+import { CalendarDateRangePicker } from "@/components/componentsCalendarAppNav/date-range-picker"
 
 import { api } from "@/hooks/use-membro-form-data"
 import { toast } from "@/hooks/use-toast"

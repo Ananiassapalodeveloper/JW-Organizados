@@ -6,8 +6,28 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const { id } = params;
   const meses = await prisma.meses.findUnique({
-    where: { id }
-    // include: { meses: true, carreira: true, servicos: { include: { servico: true, posicao: true } } }
+    where: { id },
+    include: {
+      ReunioesDates:{
+        select:{
+          Assistencia:{
+            include:{
+              ReunioesDates:{
+                select:{
+                  from:true,
+                  to:true
+                }
+              }
+            }
+          }
+        },
+      },
+      ano:{
+        select:{
+          ano:true
+        }
+      }
+    },
   });
 
   if (!meses) return NextResponse.json({ error: "meses não encontrado" }, { status: 404 });

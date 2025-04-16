@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 import { CardRegisterYearMonths } from "./components/CardRegisterYearMonths"
-import { setThemeColor } from "@/store/original-file"
+import { SetThemeColor } from "@/lib/color"
 import { useFetch } from "@/hooks/useFetch"
 import { classifyMonths } from "@/lib/isActual"
 import { generateSlug } from "@/lib/slugUtils"
@@ -252,7 +252,7 @@ function MonthListItem({
 export default function DashboardPage() {
   const { data, error, isLoading, mutate } = useFetch<AnosArray>("ano")
   const [searchTerm, setSearchTerm] = useState("")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -414,7 +414,7 @@ export default function DashboardPage() {
                 >
                   <AccordionTrigger className="px-4 py-3 hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-3 text-left">
-                      <Badge variant="outline" className={cn("rounded-full", setThemeColor(yearIndex % 5))}>
+                      <Badge variant="outline" className={cn("rounded-full", SetThemeColor(yearIndex % 5))}>
                         {year.ano}
                       </Badge>
                       <span className="font-medium">Designações do Ano {year.ano}</span>

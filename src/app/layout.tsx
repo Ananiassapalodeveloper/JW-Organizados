@@ -4,6 +4,7 @@ import { Metadata } from "next"
 import { Inter } from "next/font/google"
 import type React from "react" // Import React
 import AppWrapper from "@/components/AppWrapper"
+import { cn } from "@/lib/utils"
 
 
 
@@ -25,9 +26,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt">
-      <body className={inter.className}>
+      <body className={cn(inter.className,"flex items-center justify-center")}>
         <Providers>
-          
           <AppWrapper>{children}</AppWrapper>
         </Providers>
       </body>

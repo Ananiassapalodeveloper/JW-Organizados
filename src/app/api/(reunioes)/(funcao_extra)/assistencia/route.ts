@@ -1,28 +1,43 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
+import { assistenciaSchema } from "@/types/ExtraActivityDTO/AssistenciaType/type"; 
+import { assistenciaValueType } from "@/services/assistenciaData/data";
 
-const arrumacaoSchema = z.object({
-  name:            z.string(),
-  ReunioesDatesId: z.string(),
-  quantidade :z.number(),
-});
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const dados = arrumacaoSchema.parse(body);
+    const dados = assistenciaSchema.parse(body);
 
-    const arrumacao = await prisma.arrumacao.create({ data: dados });
+    // Verifica se já existe um registro com o mesmo `name` dentro do mesmo `ReunioesDatesId`
+        const existingRecord = await prisma.assistencia.findFirst({
+          where: { name: dados.name, ReunioesDatesId: dados.ReunioesDatesId },
+        });
+    
+        if (existingRecord) {
+          return NextResponse.json(
+            {
+              error: `A assistência para "${
+                assistenciaValueType?.find((tn) => tn.value === dados.name)?.name
+              }" já foi registado.`,
+            },
+            { status: 400 }
+          );
+        }
+
+    const assistencia = await prisma.assistencia.create({ data: dados });
 
     return NextResponse.json({
-      message: "arrumacao criado com sucesso!",
-      arrumacao,
+      message: "assistencia criado com sucesso!",
+      assistencia,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Erro ao registrar a assistencia:", error);
+
     return NextResponse.json(
-      { error: "Erro ao criar arrumacao" },
+      { error: error.message || "Erro desconhecido" },
       { status: 500 }
     );
   } finally {
@@ -31,6 +46,6 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const arrumacaos = await prisma.arrumacao.findMany();
-  return NextResponse.json(arrumacaos);
+  const Assistencia = await prisma.assistencia.findMany();
+  return NextResponse.json(Assistencia);
 }

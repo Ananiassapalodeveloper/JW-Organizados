@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 import z from "zod";
 
 const grupoSchema = z.object({
   nome: z.string().min(3),
-  descricao:z.string().nullable().optional()
+  descricao: z.string().nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -17,10 +17,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: "grupo criado com sucesso!", grupo });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Erro ao criar grupo" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erro ao criar grupo" }, { status: 500 });
   } finally {
     await prisma.$disconnect();
   }
@@ -28,14 +25,31 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const grupos = await prisma.grupo.findMany()
+    const grupos = await prisma.grupo.findMany({
+      include: {
+        dirigente: {
+          select: {
+            nome: true,
+            estado: true,
+          },
+        },
+        _count: {
+          select: {
+            Arrumacao: true,
+            membros: true,
+          },
+        },
+      },
+    });
 
-    return NextResponse.json(grupos)
+    return NextResponse.json(grupos);
   } catch (error) {
-    console.error("Erro ao buscar grupos:", error)
-    return NextResponse.json({ error: "Erro ao buscar grupos" }, { status: 500 })
+    console.error("Erro ao buscar grupos:", error);
+    return NextResponse.json(
+      { error: "Erro ao buscar grupos" },
+      { status: 500 }
+    );
   } finally {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   }
 }
-

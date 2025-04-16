@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { CristaoEnum } from "@prisma/client";
 import { z } from "zod";
 
 export type PresidenteType = {
@@ -94,6 +95,11 @@ export type presidentType = {
   ReuniaoPublicaParteSuplente: any[];
   SentinelaParteMembro: any[];
   SentinelaParteSuplente: any[];
+  IndicadoresParteMembro:any[];
+  IndicadoresParteSuplente:any[];
+
+
+
 };
 
 //_________________________________________________________________________
@@ -162,55 +168,34 @@ export const ministerioSchema = z.object({
   memberMoradorId: z.string().optional(),
   memberMoradorSuplenteId: z.string().optional(),
   lessonPoint:z.string().optional(),
-
-  bookImd: z
-    .array(
-      z.object({
-        number: z.string().optional(),
-        name: z.string().optional(),
-        points: z.array(
-          z.object({
-            name: z.string().optional(),
-            point: z.string().optional(),
-            subpoint: z.array(z.string().optional()),
-          })
-        ),
-      })
-    )
-    .max(1, { message: "Máximo de 5 serviços permitidos" })
-    .optional(),
+  lessonNumber: z.string().optional(),
+  pointNumber: z.string().optional(),
 });
 
-export type ReturMinisterio = {
+export type RegistoMinisterio = {
   id: string;
-  name:
-    | "iniciarConversa1"
-    | "iniciarConversa2"
-    | "iniciarConversa3"
-    | "manterInteresse"
-    | "fazerDisciplo"
-    | "explicarCrenca"
-    | "discurso";
+  name: string;
+  lessonPoint: string;
   tema: string;
   membroDirigente: {
     nome: string;
-    contacto: string;
-    id: string;
+    estado: string;
   };
   membroMorador: {
     nome: string;
-    contacto: string;
-    id: string;
+    estado: string;
   };
   suplenteMembroDirigente: {
     nome: string;
-    contacto: string;
-    id: string;
+    estado: string;
   };
   suplenteMembroMorador: {
     nome: string;
-    contacto: string;
-    id: string;
+    estado: string;
+  };
+  reunioesDates: {
+    from: Date;
+    to: Date;
   };
 };
 
@@ -225,21 +210,33 @@ export const cristaoSchema = z.object({
   leitorId: z.string().optional(),
   leitorSuplenteId: z.string().optional(),
   ReunioesDatesId: z.string(),
-  tema: z.string().optional().nullable(),
+  tema: z.string().optional(),
 });
 
 export type cristaoType = z.infer<typeof cristaoSchema>;
 
-export type ReturCristao = {
+export type RegistoCristao = {
   id: string;
-  name: "parte1" | "parte2" | "estudoBiblico";
+  name: CristaoEnum
   tema: string;
-
-  membro: { nome: string; contacto: string; id: string };
-
-  suplenteMembro: { nome: string; contacto: string; id: string };
-
-  LeitorEstudoBiblico: { nome: string; contacto: string; id: string };
-
-  LeitorSuplenteEstudoBiblico: { nome: string; contacto: string; id: string };
+  membro: {
+    nome: string;
+    estado: string;
+  };
+  suplenteMembro: {
+    nome: string;
+    estado: string;
+  };
+  LeitorEstudoBiblico: {
+    nome: string;
+    estado: string;
+  };
+  LeitorSuplenteEstudoBiblico: {
+    nome: string;
+    estado: string;
+  };
+  ReunioesDates: {
+    from: Date;
+    to: Date;
+  };
 };

@@ -11,53 +11,70 @@ import {
 
 export const posicoes = [
   {
-    value: "ajudante",
+    value: "AJUDANTE",
     label: "Ajudante",
   },
   {
-    value: "servo",
+    value: "DIRIGENTE",
     label: "servo",
   }
 ]
 
+
+
 export const estados = [
   {
-    value: "matriculado",
+    value: "MATRICULADO",
     label: "Matricalado",
     icon: CircleOff
   },
   {
-    value: "associado",
+    value: "ASSOCIADO",
     label: "Associado",
     icon: HelpCircle,
   },
   {
-    value: "baptizado",
+    value: "BATIZADO",
     label: "Baptizado",
     icon: Circle,
   }
 ]
 
-export const carreiras = [
+export const carreira = [
   {
-    value: "auxiliar",
+    value: "PIONEIRO_AUXILIAR",
     label: "Auxiliar",
     icon: Timer
   },
   {
-    value: "regular",
+    value: "PIONEIRO_REGULAR",
     label: "Regular",
     icon: CheckCircle,
   }
 ]
 
-export const funcoes = [
+export const Grupos = [
   {
-    value: "anciao",
+    value: "grupo 1",
+    label: "Grupo 1",
+  },
+  {
+    value: "grupo 2",
+    label: "Grupo 2",
+  },
+  {
+    value: "grupo 3",
+    label: "Grupo 3",
+  }
+]
+
+export const Dadiva = [
+  {
+    value: "ANCIAO",
     label: "Ancião"
   },
   {
-    value: "servo",
+    value: "SERVO_MINISTERIAL",
     label: "Servo Ministerial",
   }
 ]
@@ -65,40 +82,40 @@ export const funcoes = [
 export const privilegioServicos = [
   {
     label: "Contas",
-    value: "contas",
+    value: "CONTAS",
     icon: ArrowDown
   },
   {
     label: "Literatura",
-    value: "literatura",
+    value: "LITERATURA",
     icon: ArrowRight,
 
   },
   {
     label: "Território",
-    value: "territorio",
+    value: "TERRITORIO",
     icon: ArrowUp
   },
   {
     label: "Manutenção",
-    value: "manutencao",
+    value: "MANUTENCAO",
     icon: ArrowRight
   },
   {
     label: "Som",
-    value: "som",
+    value: "SOM_AUDIO",
     icon: ArrowUp,
   },
 ]
 
-export const generos = [
+export const SEXO = [
   {
     label: "M",
-    value: "m",
+    value: "M",
   },
   {
     label: "F",
-    value: "f",
+    value: "F",
   },
 ]
 

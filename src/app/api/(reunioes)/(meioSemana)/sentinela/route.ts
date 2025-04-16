@@ -3,11 +3,40 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sentinelaSchema } from "@/types/reuniaoFimSemanaDTO/type";
+import { sentinelaValueType } from "@/services/WatchTowerLeadData/data";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const dados = sentinelaSchema.parse(body);
+
+    // Verifica se já existe um registro com o mesmo `name` dentro do mesmo `ReunioesDatesId`
+    const existingRecord = await prisma.sentinela.findFirst({
+      where: { name: dados.name, ReunioesDatesId: dados.ReunioesDatesId },
+    });
+
+    if (existingRecord) {
+      return NextResponse.json(
+        {
+          error: `Já existe um registro "${
+            sentinelaValueType?.find((tn) => tn.value === dados.name)?.name
+          }" para esta semana.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Contar quantos registros já existem para essa `ReunioesDatesId`
+    const totalRegistros = await prisma.sentinela.count({
+      where: { ReunioesDatesId: dados.ReunioesDatesId },
+    });
+
+    if (totalRegistros >= 3) {
+      return NextResponse.json(
+        { error: "O limite de 3 registros por semana foi atingido." },
+        { status: 400 }
+      );
+    }
 
     const sentinela = await prisma.sentinela.create({ data: dados });
 
@@ -17,25 +46,6 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error("Erro ao registrar membro:", error);
-
-    // Verificar erros específicos do Prisma
-    if (error.code === "P2002") {
-      const field = error.meta?.target?.[1] || "campo";
-      return NextResponse.json(
-        { error: `Já existe um registo semelhante, se desejares actualizá-lo, elimina-o.` },
-        { status: 400 }
-      );
-    }
-
-    if (error.code === "P2003") {
-      return NextResponse.json(
-        {
-          error:
-            "Referência inválida. Verifique se o grupo ou superior existe.",
-        },
-        { status: 400 }
-      );
-    }
 
     return NextResponse.json(
       { error: error.message || "Erro desconhecido" },

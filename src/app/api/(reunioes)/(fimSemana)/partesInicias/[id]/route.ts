@@ -37,18 +37,18 @@ export async function PUT(
     const { id } = params;
     const body = await req.json();
 
-    const partesInicias = await prisma.partesInicias.update({
+    const PartesInicias = await prisma.partesInicias.update({
       where: { id },
       data: body,
     });
 
     return NextResponse.json({
-      message: "partesInicias atualizado com sucesso!",
-      partesInicias,
+      message: "parte Inicial atualizado com sucesso!",
+      PartesInicias,
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Erro ao atualizar partesInicias" },
+      { error: "Erro ao atualizar Parte Inicial" },
       { status: 500 }
     );
   }

@@ -1,19 +1,43 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { z } from "zod";
+import { indicadoresSchema } from "@/types/ExtraActivityDTO/IndicadorType/type";
+import { indicadoresValueType } from "@/services/indicadoresData/data";
 
-const indicadoresSchema = z.object({
-  name: z.string(),
-  memberId: z.string().optional(),
-  suplenteMemberId: z.string().optional(),
-  ReunioesDatesId: z.string(),
-});
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const dados = indicadoresSchema.parse(body);
+
+    // Verifica se já existe um registro com o mesmo `name` dentro do mesmo `ReunioesDatesId`
+    const existingRecord = await prisma.indicadores.findFirst({
+      where: { name: dados.name, ReunioesDatesId: dados.ReunioesDatesId },
+    });
+
+    if (existingRecord) {
+      return NextResponse.json(
+        {
+          error: `Já existe um registro "${
+            indicadoresValueType?.find((tn) => tn.value === dados.name)?.name
+          }" para esta semana.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Contar quantos registros já existem para essa `ReunioesDatesId`
+    const totalRegistros = await prisma.indicadores.count({
+      where: { ReunioesDatesId: dados.ReunioesDatesId },
+    });
+
+    if (totalRegistros >= 3) {
+      return NextResponse.json(
+        { error: "O limite de 3 registros por semana foi atingido." },
+        { status: 400 }
+      );
+    }
 
     const indicadores = await prisma.indicadores.create({ data: dados });
 
@@ -21,9 +45,11 @@ export async function POST(request: Request) {
       message: "indicadores criado com sucesso!",
       indicadores,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Erro ao registrar membro:", error);
+
     return NextResponse.json(
-      { error: "Erro ao criar indicadores" },
+      { error: error.message || "Erro desconhecido" },
       { status: 500 }
     );
   } finally {

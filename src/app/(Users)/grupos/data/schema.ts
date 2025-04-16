@@ -5,9 +5,8 @@ import { z } from "zod"
 export const memberSchema = z.object({
   id: z.string(),
   nome: z.string(),
-  estados: z.string(),
+  estado: z.string(),
   generos:z.string(),
-  posicoes: z.string().optional(),
   privilegioServicos:z.string().optional(),
   funcoes:z.string().optional(),
   carreiras:z.string().optional()

@@ -83,6 +83,17 @@ enum SentinelaEnum {
   oracaoFinal
 }
 
+enum IndicadoresENUM {
+  sectorA
+  sectorB
+  porta
+}
+
+enum AssistenciaEnum {
+  meioDeSemana
+  fimDeSemana
+}
+
 model Membro {
   id             String    @id @default(uuid())
   nome           String    @unique
@@ -272,7 +283,7 @@ model Meses {
   mes       Int
   descricao String?
   anoId     String // Agora obrigatório
-  ano       Ano?     @relation(fields: [anoId], references: [id], onDelete: Cascade)
+  ano       Ano?    @relation(fields: [anoId], references: [id], onDelete: Cascade)
 
   ReunioesDates ReunioesDates[]
 }
@@ -282,7 +293,7 @@ model ReunioesDates {
   from  DateTime @default(now())
   to    DateTime @default(now())
   mesId String
-  mes   Meses?    @relation(fields: [mesId], references: [id], onDelete: Cascade)
+  mes   Meses?   @relation(fields: [mesId], references: [id], onDelete: Cascade)
 
   PartesInicias PartesInicias[]
   Tesouros      Tesouros[]
@@ -346,10 +357,10 @@ model Ministerio {
 
   reunioesDatesId String
   tema            String?
-   nameLivro String?
-  lessonPoint    String?
-  Created   DateTime @default(now())
-  Updated   DateTime @updatedAt
+  nameLivro       String?
+  lessonPoint     String?
+  Created         DateTime @default(now())
+  Updated         DateTime @updatedAt
 
   membroDirigente         Membro?        @relation("membroDirigente", fields: [memberDirigenteId], references: [id])
   membroMorador           Membro?        @relation("membroMorador", fields: [memberMoradorId], references: [id])
@@ -378,7 +389,7 @@ model Cristao {
 
 model PartesFinais {
   id               String         @id @default(uuid())
-  name             String         @default("Presidente & oração inicial")
+  name             String         @default("oração final")
   memberId         String?
   suplenteMemberId String?
   ReunioesDatesId  String
@@ -422,14 +433,16 @@ model Sentinela {
 
 //Papel nas reuniões designações
 model Indicadores {
-  id               String         @id @default(uuid())
-  name             String
+  id               String          @id @default(uuid())
+  name             IndicadoresENUM @default(sectorA)
   memberId         String?
   suplenteMemberId String?
   ReunioesDatesId  String
-  membro           Membro?        @relation("ParteMembro", fields: [memberId], references: [id])
-  suplenteMembro   Membro?        @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
-  ReunioesDates    ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+  membro           Membro?         @relation("ParteMembro", fields: [memberId], references: [id])
+  suplenteMembro   Membro?         @relation("ParteSuplente", fields: [suplenteMemberId], references: [id])
+  ReunioesDates    ReunioesDates?  @relation(fields: [ReunioesDatesId], references: [id])
+
+  @@unique([ReunioesDatesId, name])
 }
 
 model Arrumacao {
@@ -439,23 +452,27 @@ model Arrumacao {
   ReunioesDatesId String
   Grupo           Grupo?         @relation(fields: [grupoId], references: [id])
   ReunioesDates   ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+
+  @@unique([grupoId, ReunioesDatesId])
 }
 
 model Assistencia {
-  id              String         @id @default(uuid())
-  name            String
-  quantidade      Int
+  id              String          @id @default(uuid())
+  name            AssistenciaEnum @default(fimDeSemana)
+  quantidade      String          @default("0")
   ReunioesDatesId String
-  ReunioesDates   ReunioesDates? @relation(fields: [ReunioesDatesId], references: [id])
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  ReunioesDates   ReunioesDates?  @relation(fields: [ReunioesDatesId], references: [id])
+
+  @@unique([ReunioesDatesId, name])
 }
 
 //__________________________________________________________________
 model HourLog {
   id        String   @id @default(cuid())
   day       DateTime
-  total     Int      // total de horas acumuladas
+  total     Int // total de horas acumuladas
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
-

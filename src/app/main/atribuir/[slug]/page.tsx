@@ -1,14 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import {
   CircleCheck,
   LampDeskIcon,
-  ListChecksIcon as ListCheck,
   Loader,
   CalendarRange,
   Calendar,
@@ -16,30 +14,17 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
-import { PresidentEndPraying } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/PresidentEndPraying";
-import { Tesouros } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/Tesouros";
-import { MinisterioPage } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/Ministerios";
-import { CristaoPage } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/Cristaos";
-import { FinalParts } from "@/app/main/(dashboard)/components/CardsDesignations/LifeMinistry/FinalPraying";
-import { WatchTowerLead } from "@/app/main/(dashboard)/components/CardsDesignations/WatchTowerSpeeching/WatchTowerLead";
-import { ReuniaoPublica } from "../../(dashboard)/components/CardsDesignations/WatchTowerSpeeching/ReuniaoPublica";
 import { CardRegisterReunioesPartes } from "./components/CardRegisterReunioes";
-import { setThemeColor } from "@/store/original-file";
 import { parseSlug } from "@/lib/slugUtils";
 import { useFetch } from "@/hooks/useFetch";
-import { formatDateRange } from "@/lib/formatDateRange";
+import { formatDateRangeLong } from "@/lib/formatDateRange";
 
 import { cn } from "@/lib/utils";
+import { MeetingDataRegisterDesignation } from "@/components/MeetingDataRegisterDesignation";
 
 type DateTime = {
   id: string;
@@ -47,12 +32,6 @@ type DateTime = {
   to: string;
   mesId: string;
 }[];
-
-const statusColors = {
-  concluido: "text-green-500 bg-green-500/10",
-  decorrendo: "text-amber-500 bg-amber-500/10",
-  naoInicializado: "text-slate-500 bg-slate-500/10",
-};
 
 export default function DashboardPage({
   params,
@@ -160,7 +139,9 @@ export default function DashboardPage({
                     <Calendar className="h-4 w-4" />
                     <span>
                       {/* {data.from}-{data.to} */}
-                      {formatDateRange(data.from, data.to)}
+                      {formatDateRangeLong(data.from, data.to, {
+                        showMonthAsText: true,
+                      })}
                     </span>
                   </div>
                   <CircleCheck
@@ -177,9 +158,9 @@ export default function DashboardPage({
 
           {formattedReuniaoDates.map((data) => (
             <TabsContent key={data.id} value={data.id} className="space-y-6">
-              <MeetingData
+              <MeetingDataRegisterDesignation
                 params={{
-                  id: `${formatDateRange(data.from, data.to, {
+                  id: `${formatDateRangeLong(data.from, data.to, {
                     showMonthAsText: true,
                   })}`,
                 }}
@@ -214,160 +195,4 @@ export default function DashboardPage({
   );
 }
 
-function MeetingData({ params, id }: { id: string; params: { id: string } }) {
-  const [activeTab, setActiveTab] = useState("meetingWeekday");
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button
-          variant={activeTab === "meetingWeekday" ? "default" : "outline"}
-          className="flex-1 justify-start gap-2"
-          onClick={() => setActiveTab("meetingWeekday")}
-        >
-          <Calendar className="h-4 w-4" />
-          Reunião do meio de semana
-        </Button>
-        <Button
-          variant={activeTab === "meetingWeekend" ? "default" : "outline"}
-          className="flex-1 justify-start gap-2"
-          onClick={() => setActiveTab("meetingWeekend")}
-        >
-          <Calendar className="h-4 w-4" />
-          Reunião do final de semana
-        </Button>
-      </div>
-
-      <div className="rounded-lg border bg-card shadow-sm">
-        <div className="flex items-center gap-2 p-4 border-b">
-          <ListCheck className="h-5 w-5 text-primary" />
-          <h2 className="font-medium">Programa da semana {params.id}</h2>
-        </div>
-
-        {activeTab === "meetingWeekday" && (
-          <div className="p-4">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-0">
-                <AccordionTrigger className="py-4">
-                  <Badge
-                    variant="outline"
-                    className={cn("px-3 py-1", setThemeColor(0))}
-                  >
-                    PARTES INICIAS
-                  </Badge>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <PresidentEndPraying params={{ id: id }} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-1">
-                <AccordionTrigger className="py-4">
-                  <Badge
-                    variant="outline"
-                    className={cn("px-3 py-1", setThemeColor(1))}
-                  >
-                    TESOUROS DA PALAVRA DE DEUS
-                  </Badge>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="grid gap-4">
-                    <Tesouros params={{ id }} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-2">
-                <AccordionTrigger className="py-4">
-                  <Badge
-                    variant="outline"
-                    className={cn("px-3 py-1", setThemeColor(2))}
-                  >
-                    EMPENHE-SE NO MINISTÉRIO
-                  </Badge>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="grid gap-4">
-                    <MinisterioPage params={{ id }} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-3">
-                <AccordionTrigger className="py-4">
-                  <Badge
-                    variant="outline"
-                    className={cn("px-3 py-1", setThemeColor(3))}
-                  >
-                    VIVER COMO CRISTÃOS
-                  </Badge>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="grid gap-4">
-                    <CristaoPage params={{ id }} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-4">
-                <AccordionTrigger className="py-4">
-                  <Badge
-                    variant="outline"
-                    className={cn("px-3 py-1", setThemeColor(0))}
-                  >
-                    PARTES FINAIS
-                  </Badge>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <FinalParts params={{ id }} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        )}
-
-        {activeTab === "meetingWeekend" && (
-          <div className="p-4">
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-0">
-                <AccordionTrigger className="py-4">
-                  <Badge
-                    variant="outline"
-                    className={cn("px-3 py-1", setThemeColor(0))}
-                  >
-                    REUNIÃO PÚBLICA
-                  </Badge>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="grid gap-4">
-                    <ReuniaoPublica params={{ id }} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-1">
-                <AccordionTrigger className="py-4">
-                  <Badge
-                    variant="outline"
-                    className={cn("px-3 py-1", setThemeColor(1))}
-                  >
-                    ESTUDO DE A SENTINELA
-                  </Badge>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-4">
-                  <div className="grid gap-4">
-                    <WatchTowerLead params={{ id }} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}

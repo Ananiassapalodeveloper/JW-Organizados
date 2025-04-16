@@ -38,7 +38,11 @@ export async function GET() {
       ReuniaoPublicaParteSuplente:true,
 
       SentinelaParteMembro:true,
-      SentinelaParteSuplente:true
+      SentinelaParteSuplente:true,
+
+      //_______________________________________
+      IndicadoresParteMembro:true,
+      IndicadoresParteSuplente:true
       
 
     },

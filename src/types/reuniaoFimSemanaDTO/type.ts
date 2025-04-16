@@ -1,3 +1,4 @@
+import { ReuniaoPublicaEnum, SentinelaEnum } from "@prisma/client";
 import { z } from "zod";
 
 export const reuniaoPublicaSchema = z
@@ -23,12 +24,22 @@ export const reuniaoPublicaSchema = z
 
 export type reuniaoPublicaType = z.infer<typeof reuniaoPublicaSchema>;
 
-export type ReturReuniaoPublica = {
+export type RegistoReuniaoPublica = {
   id: string;
-  name: "presidente" | "oracaoInicial" | "orador";
+  name: ReuniaoPublicaEnum;
   tema: string;
-  membro: { nome: string; contacto: string; id: string };
-  suplenteMembro: { nome: string; contacto: string; id: string };
+  membro: {
+    nome: string;
+    estado: string;
+  };
+  suplenteMembro: {
+    nome: string;
+    estado: string;
+  };
+  ReunioesDates: {
+    from: Date;
+    to: Date;
+  };
 };
 
 //___________________________________________________________________________
@@ -55,10 +66,20 @@ export const sentinelaSchema = z
 
 export type sentinelaType = z.infer<typeof sentinelaSchema>;
 
-export type ReturSentinela = {
+export type RegistoSentinela = {
   id: string;
-  name: "presidente" | "oracaoInicial" | "orador";
+  name: SentinelaEnum;
   tema: string;
-  membro: { nome: string; contacto: string; id: string };
-  suplenteMembro: { nome: string; contacto: string; id: string };
+  membro: {
+    nome: string;
+    estado: string;
+  };
+  suplenteMembro: {
+    nome: string;
+    estado: string;
+  };
+  ReunioesDates: {
+    from: Date;
+    to: Date;
+  };
 };

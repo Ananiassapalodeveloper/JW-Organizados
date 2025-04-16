@@ -19,9 +19,9 @@ export default function AppWrapper({ children }: { children: React.ReactNode }) 
             {isLoading ? (
                 <SplashScreen finishLoading={() => setIsLoading(false)} />
             ) : (
-                <div className="flex h-screen flex-col">
+                <div className="flex flex-col  p-2 w-full">
                     {/* <Header /> */}
-                    <main className="flex-1  p-4 md:p-8">{children}</main>
+                    <main className="p-4 md:p-8 w-full">{children}</main>
                     <Toaster />
                 </div>
             )}

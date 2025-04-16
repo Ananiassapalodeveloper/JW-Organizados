@@ -15,13 +15,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Icons } from "@/components/Icons";
-import { User, Lock, Mail } from "lucide-react";
+import { User, Lock } from "lucide-react";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormItem,
   FormField,
   FormLabel,
@@ -33,25 +31,45 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/hooks/use-membro-form-data";
 import { toast } from "@/hooks/use-toast";
 import { AxiosError } from "axios";
-import { useAuthStore } from "@/store/authStore";
 
-const SignUpSchema = z.object({
-  password: z.string({ required_error: "Por favor insira a sua senha" }),
-  name: z.string({ required_error: "O teu nome é obrigatório" }),
-});
+
+const SignUpSchema = z
+  .object({
+    password: z
+      .string({ required_error: "Por favor insira a sua senha" })
+      .min(1, { message: "Por favor insira a sua senha" }),
+    name: z
+      .string({ required_error: "O teu nome é obrigatório" })
+      .min(1, { message: "O teu nome é obrigatório" }),
+    newPassWord: z
+      .string({ required_error: "A tua nova senha é obrigatório" })
+      .min(1, { message: "A tua nova senha é obrigatório" }),
+  })
+  .refine(
+    (data) => {
+      if (data.password === data.newPassWord) {
+        return !!(data.password === data.newPassWord);
+      }
+      return true;
+    },
+    {
+      message: "Por uma questão de segurança melhor pôr um nova senha",
+      path: ["newPassWord"],
+    }
+  );
 
 type SignUpType = z.infer<typeof SignUpSchema>;
 
 // Valores padrão para o formulário
 const defaultValues: Partial<SignUpType> = {
   password: "1234",
-  name:""
+  name: "",
+  newPassWord: "",
 };
 
 export default function SignInPage() {
   const [submitError, setSubmitError] = useState<any | null>(null);
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
 
   const form = useForm<SignUpType>({
     resolver: zodResolver(SignUpSchema),
@@ -75,9 +93,10 @@ export default function SignInPage() {
       const formData = {
         nome: values.name,
         password: values.password,
+        newPassWord: values.newPassWord,
       };
 
-      await api.post("auth/login", formData);
+      await api.put("auth/registar", formData);
 
       // Supondo que a resposta contenha "user" e "token":
       // login(data.data, data?.token);
@@ -88,13 +107,12 @@ export default function SignInPage() {
       });
 
       router.refresh();
-      router.push("/");
+      router.push("/auth/login");
 
       reset(defaultValues);
     } catch (error) {
       if (error instanceof AxiosError) {
-        const errorMessage = error.response?.data?.message||
-        ""
+        const errorMessage = error.response?.data?.message || "";
         setSubmitError(errorMessage);
 
         toast({
@@ -124,7 +142,8 @@ export default function SignInPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center">Criar Conta</CardTitle>
             <CardDescription className="text-center">
-              Cadastre-se para acessar o sistema
+              Cadastre-se para acessar o sistema. Redefina a sua senha dada pelo
+              o administrador
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -187,12 +206,12 @@ export default function SignInPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Contacto</FormLabel>
+                          <FormLabel>Senha recebida</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                               <Input
-                                placeholder="Crie uma senha segura"
+                                placeholder="Adicione a senha"
                                 type="password"
                                 className="pl-8"
                                 {...field}
@@ -203,6 +222,42 @@ export default function SignInPage() {
                         </FormItem>
                       )}
                     />
+                  </motion.div>
+
+                  <motion.div
+                    className="grid gap-1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                  >
+                    <motion.div
+                      className="grid gap-1"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5, duration: 0.5 }}
+                    >
+                      <FormField
+                        control={control}
+                        name="newPassWord"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nova senha</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  placeholder="Crie uma senha segura"
+                                  type="password"
+                                  className="pl-8"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </motion.div>
                   </motion.div>
 
                   <motion.div
@@ -222,60 +277,6 @@ export default function SignInPage() {
                     </Button>
                   </motion.div>
                 </div>
-                {/* <div className="grid gap-2">
-                  <FormField
-                    control={control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Teu nome</FormLabel>
-                        <FormControl>
-                        <div className="relative">
-                        <User className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="Digite o nome completo"
-                            className="pl-8"
-                            {...field}
-                          />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Sua senha</FormLabel>
-                        <FormControl>
-                        <div className="relative">
-                        <User className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-
-                          <Input
-                            placeholder="Digite a sua senha"
-                            className="pl-8"
-                            {...field}
-                          />
-                          </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    className="w-full"
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting && (
-                      <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    {isSubmitting ? "Criando conta..." : "Criar conta"}
-                  </Button>
-                </div> */}
               </form>
             </Form>
           </CardContent>
@@ -288,7 +289,7 @@ export default function SignInPage() {
             >
               Já tem uma conta?{" "}
               <a
-                href="/sign"
+                href="/login"
                 className="underline underline-offset-4 hover:text-primary"
               >
                 Entrar

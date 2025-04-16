@@ -29,7 +29,7 @@ export const LoginForm = () => {
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await fetch('/api/auth/login1', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

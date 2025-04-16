@@ -1398,3 +1398,14 @@ export function MinisterioPage({ params }: { params: { id: string } }) {
   );
 }
 
+const ordem = {
+  garfo: 1,
+  prato: 2,
+  copo: 3
+};
+
+const itens = await prisma.item.findMany();
+
+const ordenados = itens.sort((a, b) => ordem[a.nome] - ordem[b.nome]);
+
+

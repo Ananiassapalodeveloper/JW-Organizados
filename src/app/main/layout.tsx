@@ -1,4 +1,4 @@
-import { AppSidebar } from "@/app/main/components/app-sidebar"
+import { AppSidebar } from "@/components/componentsAppSideBar/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sidebar"
 import Layout from "@/contexts/SearchContext"
 import { Metadata } from "next"
+
 export const metadata: Metadata = {
   title: "Visão geral",
   description: "Visão geral da congregação praça Nova 3",

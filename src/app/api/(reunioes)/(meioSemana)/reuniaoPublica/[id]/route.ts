@@ -11,7 +11,9 @@ export async function GET(
 
   const reuniaoPublicas = await prisma.reuniaoPublica.findMany({
     where: { ReunioesDatesId },
+    
     include: {
+
       membro: {
         select: {
           nome: true,

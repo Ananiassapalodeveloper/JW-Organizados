@@ -11,11 +11,10 @@ export async function GET(
   const partesFinais = await prisma.partesFinais.findFirst({
     where: { ReunioesDatesId: id },
 
-    select: {
-      id:true,
-      name:true,
-      suplenteMembro: { select: { nome: true, contacto: true, id: true } },
-      membro: { select: { nome: true, contacto: true, id: true } },
+    include: {
+      suplenteMembro: { select: { nome: true, contacto: true, id: true,_count:{select:{PartesFinaisParteSuplente:true}} } },
+      membro: { select: { nome: true, contacto: true, id: true,_count:{select:{PartesFinaisParteMembro:true}} } },
+
     },
   });
 

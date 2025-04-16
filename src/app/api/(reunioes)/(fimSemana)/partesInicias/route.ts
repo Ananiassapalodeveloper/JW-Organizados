@@ -19,11 +19,11 @@ export async function POST(request: Request) {
     const existingRecord = await prisma.partesInicias.findMany({
       where: { ReunioesDatesId: dados.ReunioesDatesId },
     });
-    if (existingRecord.length === 4) {
+    if (existingRecord.length >= 1) {
       return NextResponse.json(
         {
           error:
-            "O registro Para esta semana já está preenchido, não é possível criar outro.",
+            "A parte inicial dessa semana já se encontra preenchido",
         },
         { status: 400 }
       );
@@ -60,7 +60,7 @@ export async function PATCH(request: Request) {
         { status: 404 }
       );
     }
-    
+
     // Atualiza o registro existente
     const updatedRecord = await prisma.partesInicias.update({
       where: { id: existingRecord.id },
@@ -73,7 +73,7 @@ export async function PATCH(request: Request) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Erro ao atualizar partesInicias" },
+      { error: JSON.stringify(error,null,2) },
       { status: 500 }
     );
   } finally {

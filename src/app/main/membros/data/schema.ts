@@ -1,17 +1,24 @@
-import { z } from "zod"
+import { z } from "zod";
 
 // We're keeping a simple non-relational schema here.
 // IRL, you will have a schema for your data models.
 export const memberSchema = z.object({
   id: z.string(),
+  IdOriginal: z.string().uuid().optional(),
   nome: z.string(),
-  estados: z.string(),
-  generos:z.string(),
-  posicoes: z.string().optional(),
-  privilegioServicos:z.string().optional(),
-  funcoes:z.string().optional(),
-  carreiras:z.string().optional()
+  email: z.string().email(),
+  contacto: z.string(),
+  sexo: z.string(),
+  estado: z.string().optional(),
+  carreira: z.string().optional(),
+  dadiva: z.string(),
+  grupo: z.string(),
+  servicos: z.array(
+    z.object({
+      posicao: z.string(),
+      servico: z.string(),
+    })
+  ),
+});
 
-})
-
-export type memberType = z.infer<typeof memberSchema>
+export type memberType = z.infer<typeof memberSchema>;

@@ -1,13 +1,5 @@
 import { Metadata } from "next"
-
 import { Button } from "@/components/ui/button"
-
-import { CalendarDateRangePicker } from "@/app/main/(dashboard)/components/date-range-picker"
-import { MainNav } from "@/app/main/(dashboard)/components/main-nav"
-// import { Overview } from "@/app/dashboard/components/overview"
-import { Search } from "@/app/main/(dashboard)/components/search"
-import TeamSwitcher from "@/app/main/(dashboard)/components/team-switcher"
-import { UserNav } from "@/app/main/(dashboard)/components/user-nav"
 import { Users } from "lucide-react"
 
 
@@ -26,14 +18,7 @@ export default function MainPageLayout({ children }: SettingsLayoutProps) {
   return (
     <div className="flex flex-col">
       <div className="border-b">
-        <div className="flex h-16 items-center px-4">
-          <TeamSwitcher />
-          <MainNav className="mx-6" />
-          <div className="ml-auto flex items-center space-x-4">
-            <Search />
-            <UserNav />
-          </div>
-        </div>
+     
       </div>
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
@@ -42,7 +27,6 @@ export default function MainPageLayout({ children }: SettingsLayoutProps) {
             <span>Organizado</span>
           </h2>
           <div className="flex items-center space-x-2">
-            <CalendarDateRangePicker />
             <Button>Baixar</Button>
           </div>
         </div>
